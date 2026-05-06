@@ -1477,10 +1477,8 @@ userDataForm.addEventListener('submit', (e) => {
         // Inicializar ocultando el contenedor principal
         mainContainer.style.display = 'none';
         updateUI();
-        // --- LÓGICA DE SUPABASE Y ENVÍO SEGMENTADO (SPEC-02) ---
-        
-        // Configuración de Supabase (Debes reemplazar con tus credenciales reales)
-        // Instancia de Supabase (Inicializada al inicio)
+        // --- LÓGICA DE ENVÍO (CORE) ---
+
 
         async function finalizarEvaluacion() {
             const btnSummary = document.querySelector('.summary-footer .btn-primary');
