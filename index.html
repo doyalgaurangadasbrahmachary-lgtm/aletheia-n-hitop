@@ -898,11 +898,11 @@ const wa_id = urlParams.get('wa_id') || 'usuario_web_' + Date.now();
 
 const SUPABASE_URL = 'https://rfwfveaudrnughtulbco.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vhupF9kAOgV3GG-4TEMlPQ_jhqLPxY6';
-let supabase = null;
+let supabaseClient = null;
 
 // Intentar carga temprana
 if (typeof window.supabase !== 'undefined') {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
         const modulo1 = [
             { id: "M1_B01", texto: "Bloque 01", opciones: { A: "A menudo siento una tensión o nudo en el estómago al anticipar el futuro.", B: "Siento que mis capacidades me otorgan el derecho a privilegios especiales y un trato único frente al resto." } },
@@ -1324,9 +1324,9 @@ userDataForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
     // Validación crítica: Si el motor de base de datos no cargó, bloquear el avance.
-    if (!supabase) {
+    if (!supabaseClient) {
         if (typeof window.supabase !== 'undefined') {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } else {
             alert("Error de conexión: No se pudo establecer enlace con el servidor seguro. Por favor, recargue la página o verifique su conexión a internet.");
             return; // Bloquea la transición para evitar pérdida de datos
@@ -1506,7 +1506,7 @@ userDataForm.addEventListener('submit', (e) => {
             progressContainer.style.display = 'block';
 
             try {
-                if (!supabase) throw new Error("Supabase no configurado");
+                if (!supabaseClient) throw new Error("Supabase no configurado");
 
                 // --- 4. CORRECCIÓN DE MAPEO (MOD 2) ---
                 const formatMod1 = modulo1.map(q => respuestasFinales.modulo1[q.id] || '-').join(', ');
@@ -1525,7 +1525,7 @@ userDataForm.addEventListener('submit', (e) => {
                     "Módulo IV (Juicio Situacional - 3 respuestas A, B o C)": `[${formatMod4}]`
                 };
 
-                const { data: record, error: dbError } = await supabase
+                const { data: record, error: dbError } = await supabaseClient
                     .from('evaluaciones_completas')
                     .insert([{
                         wa_id: wa_id,
@@ -1555,7 +1555,7 @@ userDataForm.addEventListener('submit', (e) => {
                         // Convertir Base64 a Blob
                         const blob = await fetch(foto.captured).then(res => res.blob());
 
-                        const { error: storageError } = await supabase.storage
+                        const { error: storageError } = await supabaseClient.storage
                             .from('biometria_test')
                             .upload(fileName, blob, {
                                 contentType: 'image/jpeg',
