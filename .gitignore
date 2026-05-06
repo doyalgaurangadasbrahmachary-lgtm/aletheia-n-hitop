@@ -1,0 +1,16 @@
+node_modules/
+.DS_Store
+.gemini/
+scratch/
+*.txt
+*.ps1
+*.docx
+*.md
+!README.md
+!BITACORA_SESION.md
+!secuencia_tareas.md
+!index.html
+!vercel.json
+!imagenes/
+!package.json
+!package-lock.json
