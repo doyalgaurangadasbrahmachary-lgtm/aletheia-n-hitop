@@ -854,30 +854,75 @@
         </div>
     </div>
 
-    <!-- Sección de Captura de Fotos -->
+    <!-- Sección de Captura de Fotos (Restaurada a 3 Columnas + Stepper) -->
     <div id="photo-capture-container" style="display: none;">
-        <div style="text-align: left; margin-bottom: 30px;">
-            <h2 style="margin: 0; color: var(--primary); font-size: 1.8rem; font-weight: 700;">Captura Biométrica</h2>
-            <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 1.1rem;">Por favor, toma o carga las 8 fotos solicitadas a continuación siguiendo las imágenes de referencia.</p>
+        <div class="capture-header">
+            <h2 id="photo-section-title" style="margin: 0; color: var(--primary); font-size: 1.8rem; font-weight: 700;">Captura Biométrica</h2>
+            <p id="photo-section-desc" style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 1.1rem;">Sigue las instrucciones y el ejemplo para cada una de las 8 capturas.</p>
         </div>
         
         <div class="cards-grid">
-            <div class="card errors-card" style="margin-bottom: 20px;">
-                <div class="card-title">Instrucciones Generales</div>
-                <ul class="errors-list">
-                    <li><span>Fondo: Usa un fondo liso para un mejor contraste.</span></li>
-                    <li><span>Posición: Mantén la cámara firme y paralela a la mano.</span></li>
-                    <li><span>Centrado: Asegúrate de que toda la mano, incluyendo la muñeca, sea visible.</span></li>
-                </ul>
+            <!-- Columna 1: Instrucciones -->
+            <div class="card">
+                <div class="card-title">Instrucciones</div>
+                <div style="padding: 10px; text-align: left; overflow-y: auto; height: 100%;">
+                    <ul class="errors-list" id="photo-instructions" style="text-align: left;">
+                        <!-- Dinámico -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Columna 2: Ejemplo -->
+            <div class="card">
+                <div class="card-title">Ejemplo de Referencia</div>
+                <img id="ref-image" class="card-img" src="" alt="Referencia">
+            </div>
+
+            <!-- Columna 3: Captura -->
+            <div class="card">
+                <div class="card-title">Tu Captura</div>
+                <div class="upload-zone" id="active-upload-zone" onclick="document.getElementById('file-input-active').click()">
+                    <img id="active-preview" class="preview-img" style="display: none;">
+                    <div id="active-placeholder">
+                        <div class="upload-icon">📸</div>
+                        <div class="upload-text">Toca para capturar o subir</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; width: 100%; margin-top: 15px;">
+                    <button type="button" class="btn" onclick="document.getElementById('file-input-cam').click()" style="flex: 1; padding: 12px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px;">📷 Cámara</button>
+                    <button type="button" class="btn" onclick="document.getElementById('file-input-active').click()" style="flex: 1; padding: 12px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px;">📁 Galería</button>
+                </div>
+                
+                <input type="file" id="file-input-cam" accept="image/*" capture="environment" style="display: none;" onchange="procesarImagenCaptura(event)">
+                <input type="file" id="file-input-active" accept="image/*" style="display: none;" onchange="procesarImagenCaptura(event)">
             </div>
         </div>
 
-        <div id="photos-list" style="display: flex; flex-direction: column; gap: 40px;">
-            <!-- Renderizado dinámico por JS -->
+        <!-- Stepper / Navegación Inferior -->
+        <div class="thumbnails-wrapper">
+            <div class="thumb-group">
+                <div class="thumb-group-title">Mano Derecha</div>
+                <div class="thumbnails-grid" id="thumbs-derecha">
+                    <div class="thumb-slot" id="thumb-0" onclick="selectPhoto(0)"><span class="slot-label">1D</span></div>
+                    <div class="thumb-slot" id="thumb-1" onclick="selectPhoto(1)"><span class="slot-label">2D</span></div>
+                    <div class="thumb-slot" id="thumb-2" onclick="selectPhoto(2)"><span class="slot-label">3D</span></div>
+                    <div class="thumb-slot" id="thumb-3" onclick="selectPhoto(3)"><span class="slot-label">4D</span></div>
+                </div>
+            </div>
+            <div class="thumb-group">
+                <div class="thumb-group-title">Mano Izquierda</div>
+                <div class="thumbnails-grid" id="thumbs-izquierda">
+                    <div class="thumb-slot" id="thumb-4" onclick="selectPhoto(4)"><span class="slot-label">1I</span></div>
+                    <div class="thumb-slot" id="thumb-5" onclick="selectPhoto(5)"><span class="slot-label">2I</span></div>
+                    <div class="thumb-slot" id="thumb-6" onclick="selectPhoto(6)"><span class="slot-label">3I</span></div>
+                    <div class="thumb-slot" id="thumb-7" onclick="selectPhoto(7)"><span class="slot-label">4I</span></div>
+                </div>
+            </div>
         </div>
 
-        <div style="text-align: center; margin-top: 50px; margin-bottom: 30px;">
-            <button type="button" class="btn" id="final-send-btn" style="display: none; width: 100%; max-width: 400px; padding: 18px; font-size: 1.2rem; margin: 0 auto; background: var(--primary); color: var(--bg-dark); font-weight: 700; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">Enviar Todas las Capturas</button>
+        <div style="text-align: center; margin-top: 30px;">
+            <button type="button" class="btn" id="final-send-btn" style="display: none; width: 100%; max-width: 400px; padding: 18px; font-size: 1.2rem; background: var(--primary); color: var(--bg-dark); font-weight: 700;">Enviar Evaluación Completa</button>
         </div>
     </div>
 
@@ -1361,101 +1406,70 @@ userDataForm.addEventListener('submit', (e) => {
         const instructionsContainer = document.getElementById('instructions-container');
         const photoCaptureContainer = document.getElementById('photo-capture-container');
         
+        // --- 4. MOTOR DE BIOMETRÍA (RESTAURADO) ---
         const fotosData = [
-            { id: 'palma-estirada-mderecha', label: '1D', titulo: 'Foto 1 - Palma derecha estirada', desc: 'La palma y los dedos deben estar bien estirados. La muñeca debe ser visible.', refImg: 'imagenes/palma derecha estirada.webp', errorImg: '' },
-            { id: 'palma-relajada-mderecha', label: '2D', titulo: 'Foto 2 - Palma derecha relajada', desc: 'Palma y dedos relajados, sin tensión. Los dedos pueden estar ligeramente doblados sin cubrir la palma.', refImg: 'imagenes/palma derecha relajada.webp', errorImg: '' },
-            { id: 'lateral-mderecha', label: '3D', titulo: 'Foto 3 - Lateral de la mano derecha', desc: 'Capturar el lateral del lado del dedo meñique con la mano ligeramente relajada.', refImg: 'imagenes/lateral de la mano.webp', errorImg: '' },
-            { id: 'dorso-mderecha', label: '4D', titulo: 'Foto 4 - Dorso de la mano derecha', desc: 'Es la "espalda" de la mano. Se deben separar bien los dedos y asegurar que las uñas y la muñeca sean visibles.', refImg: 'imagenes/dorso de la mano.webp', errorImg: '' },
-            { id: 'palma-estirada-mizquierda', label: '1I', titulo: 'Foto 5 - Palma izquierda estirada', desc: 'La palma y los dedos deben estar bien estirados. La muñeca debe ser visible.', refImg: 'imagenes/palma izquierda estirada.webp', errorImg: '' },
-            { id: 'palma-relajada-mizquierda', label: '2I', titulo: 'Foto 6 - Palma izquierda relajada', desc: 'Palma y dedos relajados, sin tensión. Los dedos pueden estar ligeramente doblados sin cubrir la palma.', refImg: 'imagenes/palma izquierda relajada.webp', errorImg: '' },
-            { id: 'lateral-mizquierda', label: '3I', titulo: 'Foto 7 - Lateral de la mano izquierda', desc: 'Capturar el lateral del lado del dedo meñique con la mano ligeramente relajada.', refImg: 'imagenes/lateral izquierda.webp', errorImg: '' },
-            { id: 'dorso-mizquierda', label: '4I', titulo: 'Foto 8 - Dorso de la mano izquierda', desc: 'Es la "espalda" de la mano. Se deben separar bien los dedos y asegurar que las uñas y la muñeca sean visibles.', refImg: 'imagenes/dorso de la mano izquierda.webp', errorImg: '' }
+            { id: '1D', titulo: 'Palma Derecha Estirada', desc: 'La palma y los dedos deben estar bien estirados. La muñeca debe ser visible.', refImg: 'imagenes/palma derecha estirada.webp', instructions: ['Mano abierta', 'Dedos separados', 'Buena luz'] },
+            { id: '2D', titulo: 'Palma Derecha Relajada', desc: 'Palma y dedos relajados, sin tensión.', refImg: 'imagenes/palma derecha relajada.webp', instructions: ['Mano natural', 'Sin forzar', 'Sin sombras'] },
+            { id: '3D', titulo: 'Lateral Derecha', desc: 'Capturar el lateral del dedo meñique.', refImg: 'imagenes/lateral de la mano.webp', instructions: ['Perfil de mano', 'Dedo meñique', 'Encuadre total'] },
+            { id: '4D', titulo: 'Dorso Derecha', desc: 'Espalda de la mano con dedos separados.', refImg: 'imagenes/dorso de la mano.webp', instructions: ['Uñas visibles', 'Nudillos claros', 'Fondo neutro'] },
+            { id: '1I', titulo: 'Palma Izquierda Estirada', desc: 'La palma y los dedos deben estar bien estirados.', refImg: 'imagenes/palma izquierda estirada.webp', instructions: ['Mano abierta', 'Dedos separados', 'Buena luz'] },
+            { id: '2I', titulo: 'Palma Izquierda Relajada', desc: 'Palma y dedos relajados, sin tensión.', refImg: 'imagenes/palma izquierda relajada.webp', instructions: ['Mano natural', 'Sin forzar', 'Sin sombras'] },
+            { id: '3I', titulo: 'Lateral Izquierda', desc: 'Capturar el lateral del dedo meñique.', refImg: 'imagenes/lateral izquierda.webp', instructions: ['Perfil de mano', 'Dedo meñique', 'Encuadre total'] },
+            { id: '4I', titulo: 'Dorso Izquierda', desc: 'Espalda de la mano con dedos separados.', refImg: 'imagenes/dorso de la mano izquierda.webp', instructions: ['Uñas visibles', 'Nudillos claros', 'Fondo neutro'] }
         ];
 
         let currentPhotoIndex = 0;
-        const fotosCargadas = {}; // Guardará los archivos renombrados
 
-        function renderPhotoSections() {
-            const list = document.getElementById('photos-list');
-            list.innerHTML = '';
-            fotosData.forEach((data, index) => {
-                const section = document.createElement('div');
-                section.className = 'card';
-                section.style = 'border: 1px solid var(--glass-border); border-radius: 16px; padding: 25px; background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 15px;';
-                
-                section.innerHTML = `
-                    <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 10px;">
-                        <h3 style="color: var(--primary); margin: 0 0 8px 0; font-size: 1.4rem;">${data.titulo}</h3>
-                        <p style="color: var(--text-muted); margin: 0; font-size: 1rem; line-height: 1.4;">${data.desc}</p>
-                    </div>
-                    
-                    <div style="display: flex; gap: 25px; flex-wrap: wrap;">
-                        <!-- Referencia -->
-                        <div style="flex: 1; min-width: 250px;">
-                            <div style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted); font-weight: 600;">EJEMPLO CORRECTO</div>
-                            <div style="position: relative; width: 100%; height: 350px; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);">
-                                <img src="${data.refImg}" style="width: 100%; height: 100%; object-fit: contain;">
-                            </div>
-                        </div>
-                        
-                        <!-- Upload Zone -->
-                        <div style="flex: 1; min-width: 250px;">
-                            <div style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted); font-weight: 600;">TU CAPTURA</div>
-                            <div id="upload-zone-${index}" class="upload-zone" style="position: relative; overflow: hidden; display: flex; flex-direction: column; border: 2px dashed var(--glass-border); height: 350px; border-radius: 12px; background: rgba(255,255,255,0.02); transition: all 0.3s ease;">
-                                
-                                <img id="preview-${index}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px; display: none; background: rgba(0,0,0,0.2);">
-                                
-                                <div id="placeholder-${index}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                                    <div style="font-size: 3.5rem; margin-bottom: 15px; opacity: 0.8;">📸</div>
-                                    <div style="color: var(--text-muted); font-size: 1rem; padding: 0 20px; text-align: center;">Toma o sube la foto siguiendo el ejemplo</div>
-                                </div>
-
-                                <div style="position: absolute; bottom: 15px; left: 15px; right: 15px; display: flex; gap: 10px; z-index: 10;">
-                                    <button type="button" class="btn" onclick="document.getElementById('file-cam-${index}').click()" style="flex: 1; padding: 12px; font-size: 0.9rem; background: var(--primary); color: var(--bg-dark); font-weight: 700; box-shadow: 0 4px 15px rgba(16,185,129,0.3); border: none; border-radius: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;"><span>📷</span> Cámara</button>
-                                    <button type="button" class="btn" onclick="document.getElementById('file-gal-${index}').click()" style="flex: 1; padding: 12px; font-size: 0.9rem; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: white; font-weight: 600; backdrop-filter: blur(5px); border-radius: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;"><span>📁</span> Galería</button>
-                                </div>
-                                
-                                <input type="file" id="file-cam-${index}" accept="image/*" capture="environment" style="display: none;">
-                                <input type="file" id="file-gal-${index}" accept="image/*" style="display: none;">
-                            </div>
-                        </div>
-                    </div>
-                `;
-                list.appendChild(section);
-
-                // Add event listeners programmatically to avoid inline HTML handlers issues
-                const handleFile = (e) => procesarImagenGlobal(e, index);
-                section.querySelector(`#file-cam-${index}`).addEventListener('change', handleFile);
-                section.querySelector(`#file-gal-${index}`).addEventListener('change', handleFile);
+        function updatePhotoUI() {
+            const data = fotosData[currentPhotoIndex];
+            const titleEl = document.getElementById('photo-section-title');
+            const descEl = document.getElementById('photo-section-desc');
+            const instrList = document.getElementById('photo-instructions');
+            const refImg = document.getElementById('ref-image');
+            
+            if (titleEl) titleEl.textContent = `Captura ${data.id}: ${data.titulo}`;
+            if (descEl) descEl.textContent = data.desc;
+            if (instrList) instrList.innerHTML = data.instructions.map(i => `<li>${i}</li>`).join('');
+            if (refImg) refImg.src = data.refImg;
+            
+            const preview = document.getElementById('active-preview');
+            const placeholder = document.getElementById('active-placeholder');
+            const zone = document.getElementById('active-upload-zone');
+            
+            if (data.captured) {
+                preview.src = data.captured;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+                zone.style.borderColor = 'var(--primary)';
+            } else {
+                preview.style.display = 'none';
+                placeholder.style.display = 'flex';
+                zone.style.borderColor = 'var(--glass-border)';
+            }
+            
+            // Actualizar stepper
+            document.querySelectorAll('.thumb-slot').forEach((slot, i) => {
+                slot.classList.toggle('active', i === currentPhotoIndex);
+                slot.classList.toggle('has-photo', !!fotosData[i].captured);
             });
+
+            verificarEnvioFinal();
         }
 
-        startCaptureBtn.addEventListener('click', () => {
-            instructionsContainer.style.display = 'none';
-            photoCaptureContainer.style.display = 'block';
-            renderPhotoSections();
-        });
+        window.selectPhoto = function(index) {
+            currentPhotoIndex = index;
+            updatePhotoUI();
+        };
 
-        function procesarImagenGlobal(e, index) {
+        window.procesarImagenCaptura = function(e) {
             if (e.target.files.length > 0) {
                 const file = e.target.files[0];
                 const reader = new FileReader();
-                
                 reader.onload = function(event) {
-                    const base64Data = event.target.result;
-                    fotosData[index].captured = base64Data;
-                    
-                    const preview = document.getElementById(`preview-${index}`);
-                    const placeholder = document.getElementById(`placeholder-${index}`);
-                    const zone = document.getElementById(`upload-zone-${index}`);
-                    
-                    preview.src = base64Data;
-                    preview.style.display = 'block';
-                    placeholder.style.display = 'none';
-                    zone.style.borderColor = 'var(--primary)';
+                    fotosData[currentPhotoIndex].captured = event.target.result;
+                    const zone = document.getElementById('active-upload-zone');
                     zone.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
-                    
-                    verificarEnvioFinal();
+                    updatePhotoUI();
                 };
                 reader.readAsDataURL(file);
             }
@@ -1550,7 +1564,7 @@ userDataForm.addEventListener('submit', (e) => {
                     if (foto.captured) {
                         statusText.innerText = `Subiendo biometría: ${foto.titulo} (${fotosSubidas + 1}/${totalFotos})`;
                         
-                        const fileName = `${wa_id}/${record.id}_${foto.titulo.replace(/\s+/g, '_').split('-')[1].trim()}_${Date.now()}.jpg`;
+                        const fileName = `${wa_id}/${record.id}_${foto.id}_${foto.titulo.replace(/\s+/g, '_')}_${Date.now()}.jpg`;
                         
                         // Convertir Base64 a Blob
                         const blob = await fetch(foto.captured).then(res => res.blob());
