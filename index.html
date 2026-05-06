@@ -1418,6 +1418,24 @@ userDataForm.addEventListener('submit', (e) => {
             { id: '4I', titulo: 'Dorso Izquierda', desc: 'Espalda de la mano con dedos separados.', refImg: 'imagenes/dorso de la mano izquierda.webp', instructions: ['Uñas visibles', 'Nudillos claros', 'Fondo neutro'] }
         ];
 
+        // --- 5. VÍNCULO DE TRANSICIÓN A BIOMETRÍA ---
+        if (startCaptureBtn) {
+            startCaptureBtn.addEventListener('click', () => {
+                if (typeof instructionsContainer !== 'undefined' && typeof photoCaptureContainer !== 'undefined') {
+                    instructionsContainer.style.display = 'none';
+                    photoCaptureContainer.style.display = 'block';
+                    window.scrollTo(0, 0);
+                    if (typeof updatePhotoUI === 'function') {
+                        updatePhotoUI(); 
+                    } else {
+                        console.error("Fallo Crítico: updatePhotoUI no está definida.");
+                    }
+                } else {
+                    console.error("Fallo Crítico: instructionsContainer o photoCaptureContainer no encontrados.");
+                }
+            });
+        }
+
         let currentPhotoIndex = 0;
 
         function updatePhotoUI() {
