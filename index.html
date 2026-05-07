@@ -1753,12 +1753,12 @@ document.addEventListener('DOMContentLoaded', () => {
             verificarEnvioFinal();
         }
 
-        function changePhoto(direction) {
+        window.changePhoto = function(direction) {
             currentPhotoIndex += direction;
             if (currentPhotoIndex < 0) currentPhotoIndex = fotosData.length - 1;
             if (currentPhotoIndex >= fotosData.length) currentPhotoIndex = 0;
             updatePhotoUI();
-        }
+        };
 
         window.selectPhoto = function(index) {
             currentPhotoIndex = index;
