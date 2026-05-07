@@ -1065,7 +1065,7 @@
 (function(){
     const logs = document.getElementById('console-logs');
     const consoleUI = document.getElementById('mobile-console');
-    if(/Android|iPhone|iPad/i.test(navigator.userAgent)) consoleUI.style.display='block';
+    if(consoleUI) consoleUI.style.display='block';
     
     const oldLog = console.log;
     console.log = function(...args){
@@ -1519,40 +1519,51 @@ function updateUI() {
 
 // --- 2. TRANSICIÓN Y VALIDACIÓN DE RED ---
 document.addEventListener('DOMContentLoaded', () => {
+    alert("1. DOM Cargado. Buscando formulario..."); // Test de inicialización
     const preFormContainer = document.getElementById('pre-form-container');
     const userDataForm = document.getElementById('user-data-form');
     
     if (userDataForm) {
+        alert("2. Formulario encontrado. Atando evento submit."); // Test de existencia DOM
         userDataForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            alert("3. Clic detectado! Iniciando recolección de datos..."); // Test de evento táctil
             
-            // Validación crítica: Si el motor de base de datos no cargó, bloquear el avance.
-            if (!supabaseClient) {
-                const wa_id_local = urlParams.get('wa_id') || '0';
-                if (typeof window.supabase !== 'undefined') {
-                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                } else {
-                    alert("Error de conexión: No se pudo establecer enlace con el servidor seguro. Por favor, recargue la página o verifique su conexión a internet.");
-                    return; // Bloquea la transición para evitar pérdida de datos
+            try {
+                // Validación crítica: Si el motor de base de datos no cargó, bloquear el avance.
+                if (!supabaseClient) {
+                    const wa_id_local = urlParams.get('wa_id') || '0';
+                    if (typeof window.supabase !== 'undefined') {
+                        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    } else {
+                        alert("Error de conexión: No se pudo establecer enlace con el servidor seguro. Por favor, recargue la página o verifique su conexión a internet.");
+                        return; // Bloquea la transición para evitar pérdida de datos
+                    }
                 }
-            }
 
-            userData = {
-                nombre: (document.getElementById('user-name') && document.getElementById('user-name').value) ? document.getElementById('user-name').value : 'Anónimo',
-                ciudad: (document.getElementById('user-city') && document.getElementById('user-city').value) ? document.getElementById('user-city').value : 'No definida',
-                edad: (document.getElementById('user-age') && document.getElementById('user-age').value) ? document.getElementById('user-age').value : '0',
-                estadoCivil: (document.getElementById('user-status') && document.getElementById('user-status').value) ? document.getElementById('user-status').value : 'No especificado',
-                genero: (document.getElementById('user-gender') && document.getElementById('user-gender').value) ? document.getElementById('user-gender').value : 'No especificado',
-                wa_id: wa_id
-            };
-            
-            if (preFormContainer && mainContainer) {
-                preFormContainer.style.display = 'none';
-                mainContainer.style.display = 'block';
-                window.scrollTo(0, 0);
-                updateUI();
+                userData = {
+                    nombre: (document.getElementById('user-name') && document.getElementById('user-name').value) ? document.getElementById('user-name').value : 'Anónimo',
+                    ciudad: (document.getElementById('user-city') && document.getElementById('user-city').value) ? document.getElementById('user-city').value : 'No definida',
+                    edad: (document.getElementById('user-age') && document.getElementById('user-age').value) ? document.getElementById('user-age').value : '0',
+                    estadoCivil: (document.getElementById('user-status') && document.getElementById('user-status').value) ? document.getElementById('user-status').value : 'No especificado',
+                    genero: (document.getElementById('user-gender') && document.getElementById('user-gender').value) ? document.getElementById('user-gender').value : 'No especificado',
+                    wa_id: wa_id
+                };
+                
+                alert("4. Datos recolectados con éxito. Pasando a Módulo 1."); // Test de recolección
+                
+                if (preFormContainer && mainContainer) {
+                    preFormContainer.style.display = 'none';
+                    mainContainer.style.display = 'block';
+                    window.scrollTo(0, 0);
+                    updateUI();
+                }
+            } catch (err) {
+                alert("ERROR EN RECOLECCIÓN: " + err.message);
             }
         });
+    } else {
+        alert("ERROR CRÍTICO: No se encontró el #user-data-form en el HTML.");
     }
 });
 
