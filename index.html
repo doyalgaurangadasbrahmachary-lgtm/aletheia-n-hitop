@@ -1038,7 +1038,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 30px;">
-            <button type="button" class="btn" id="final-send-btn" style="display: none; width: 100%; max-width: 400px; padding: 18px; font-size: 1.2rem; background: var(--primary); color: var(--bg-dark); font-weight: 700;">Enviar Evaluación Completa</button>
+            <button type="button" class="btn" id="final-send-btn" onclick="window.finalizarEvaluacion()" style="display: none; width: 100%; max-width: 400px; padding: 18px; font-size: 1.2rem; background: var(--primary); color: var(--bg-dark); font-weight: 700;">Enviar Evaluación Completa</button>
         </div>
     </div>
 
@@ -1519,15 +1519,12 @@ function updateUI() {
 
 // --- 2. TRANSICIÓN Y VALIDACIÓN DE RED ---
 document.addEventListener('DOMContentLoaded', () => {
-    alert("1. DOM Cargado. Buscando formulario..."); // Test de inicialización
     const preFormContainer = document.getElementById('pre-form-container');
     const userDataForm = document.getElementById('user-data-form');
     
     if (userDataForm) {
-        alert("2. Formulario encontrado. Atando evento submit."); // Test de existencia DOM
         userDataForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            alert("3. Clic detectado! Iniciando recolección de datos..."); // Test de evento táctil
             
             try {
                 // Validación crítica: Si el motor de base de datos no cargó, bloquear el avance.
@@ -1550,8 +1547,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     wa_id: wa_id
                 };
                 
-                alert("4. Datos recolectados con éxito. Pasando a Módulo 1."); // Test de recolección
-                
                 if (preFormContainer && mainContainer) {
                     preFormContainer.style.display = 'none';
                     mainContainer.style.display = 'block';
@@ -1562,8 +1557,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("ERROR EN RECOLECCIÓN: " + err.message);
             }
         });
-    } else {
-        alert("ERROR CRÍTICO: No se encontró el #user-data-form en el HTML.");
     }
 });
 
@@ -1798,7 +1791,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        document.getElementById('final-send-btn').addEventListener('click', finalizarEvaluacion);
+        // document.getElementById('final-send-btn').addEventListener('click', finalizarEvaluacion); // Reemplazado por atributo onclick
 
 
         // Inicializar ocultando el contenedor principal
@@ -1838,95 +1831,85 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        async function finalizarEvaluacion() {
-            if (!globalRecordId) {
-                alert("Error crítico: Sesión huérfana."); return;
-            }
-
-            const successScreen = document.getElementById('success-screen');
-            const summaryContainer = document.getElementById('resumen-final');
-            const photoContainer = document.getElementById('photo-capture-container');
-            
-            // Setup UI Inicial
-            if (summaryContainer) summaryContainer.style.display = 'none';
-            if (photoContainer) photoContainer.style.display = 'none';
-            successScreen.style.display = 'flex';
-            
-            const stepProc = document.getElementById('step-processing');
-            const stepUpload = document.getElementById('step-uploading');
-            const statusTxt = document.getElementById('upload-status-text');
+        window.finalizarEvaluacion = async function() {
             const activeBtn = document.getElementById('final-send-btn');
-            if (activeBtn) activeBtn.style.display = 'none'; // Ocultar botón durante proceso
+            if (activeBtn) activeBtn.disabled = true;
+            
+            alert("Iniciando motor de transmisión..."); // Diagnóstico de inicio
 
             try {
-                // FASE 2A: PROCESAMIENTO CPU (Se omite si ya existe payloadPreparado en un reintento)
-                if (!payloadPreparado) {
-                    stepProc.style.color = '#eab308'; // Amarillo (En proceso)
-                    statusTxt.innerText = "Preparando motor de compresión...";
-                    payloadPreparado = [];
-
-                    for (let foto of fotosData) {
-                        if (!foto.captured) continue;
-                        const esPesada = foto.titulo.toLowerCase().includes('relajada');
-                        const extension = esPesada ? 'jpg' : 'webp';
-                        const mimeType = esPesada ? 'image/jpeg' : 'image/webp';
-                        const fileName = `${wa_id}/${globalRecordId}_${foto.id}_${foto.titulo.replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
-
-                        let dataUrl = foto.captured;
-                        if (!esPesada) {
-                            statusTxt.innerText = `Optimizando (WebP): ${foto.titulo}...`;
-                            dataUrl = await comprimirImagen(foto.captured, 1200, 0.8);
-                        }
-                        
-                        const blob = await fetch(dataUrl).then(res => res.blob());
-                        payloadPreparado.push({ fileName, blob, mimeType, titulo: foto.titulo });
-                    }
+                if (!globalRecordId) {
+                    alert("Error crítico: globalRecordId es nulo. Faltan datos base.");
+                    if (activeBtn) activeBtn.disabled = false;
+                    return;
                 }
+
+                const summaryContainer = document.getElementById('resumen-final');
+                const photoContainer = document.getElementById('photo-capture-container');
+                if (summaryContainer) summaryContainer.style.display = 'none';
+                if (photoContainer) photoContainer.style.display = 'none';
+
+                const successScreen = document.getElementById('success-screen');
+                if (successScreen) successScreen.style.display = 'flex';
                 
-                // Éxito Fase 2A
-                stepProc.style.color = '#22c55e'; // Verde
-                stepProc.innerHTML = `<span class="icon">✅</span> <span class="text">1. Biometría estabilizada</span>`;
+                const statusTxt = document.getElementById('upload-status-text');
+                const progressBar = document.getElementById('main-progress-bar');
+                
+                let procesadas = 0;
+                const validPhotos = fotosData.filter(f => f.captured);
+                const total = validPhotos.length;
 
-                // FASE 2B: TRANSMISIÓN RED
-                stepUpload.style.color = '#eab308'; // Amarillo
-                let subidas = 0;
-                const total = payloadPreparado.length;
+                if (total === 0) {
+                    alert("Abortando: No hay capturas en memoria.");
+                    if (activeBtn) activeBtn.disabled = false;
+                    return;
+                }
 
-                for (let item of payloadPreparado) {
-                    statusTxt.innerText = `Transmitiendo: ${item.titulo} (${subidas + 1}/${total})...`;
+                for (let i = 0; i < fotosData.length; i++) {
+                    let foto = fotosData[i];
+                    if (!foto.captured) continue;
+
+                    if (statusTxt) statusTxt.innerText = `Optimizando y transmitiendo: ${foto.titulo} (${procesadas+1}/${total})`;
+                    const esPesada = foto.titulo.toLowerCase().includes('relajada');
                     
+                    // Fase CPU: Compresión individual
+                    let dataUrl = foto.captured;
+                    if (!esPesada) {
+                        dataUrl = await comprimirImagen(foto.captured, 1200, 0.8);
+                    }
+                    const blob = await fetch(dataUrl).then(res => res.blob());
+
+                    // LIBERACIÓN DE MEMORIA CRÍTICA (Evita OOM en móvil)
+                    fotosData[i].captured = null; 
+                    dataUrl = null;
+
+                    // Fase Red: Transmisión individual
+                    const extension = esPesada ? 'jpg' : 'webp';
+                    const mimeType = esPesada ? 'image/jpeg' : 'image/webp';
+                    const fileName = `${wa_id}/${globalRecordId}_${foto.id}_${Date.now()}.${extension}`;
+
                     const { error: storageError } = await supabaseClient.storage
                         .from('biometria_test')
-                        .upload(item.fileName, item.blob, { contentType: item.mimeType, upsert: false });
-                    
+                        .upload(fileName, blob, { contentType: mimeType, upsert: false });
+
                     if (storageError) throw storageError;
-                    
-                    subidas++;
-                    document.getElementById('main-progress-bar').style.width = `${(subidas / total) * 100}%`;
+
+                    procesadas++;
+                    if (progressBar) progressBar.style.width = `${(procesadas / total) * 100}%`;
                 }
 
-                // Éxito Fase 2B (Respuesta 200 implícita)
-                stepUpload.style.color = '#22c55e'; // Verde
-                stepUpload.innerHTML = `<span class="icon">✅</span> <span class="text">2. Base de datos sincronizada</span>`;
-                statusTxt.innerText = "¡Transmisión completada con éxito!";
-                document.getElementById('success-title').innerText = "¡Evaluación Exitosa!";
+                if (statusTxt) statusTxt.innerText = "¡Transmisión completada con éxito!";
+                alert("Transmisión finalizada. Ejecutando Deep Link de WhatsApp..."); // Diagnóstico de éxito
                 
                 setTimeout(() => {
                     window.location.href = "whatsapp://send?text=Evaluación%20biométrica%20enviada%20con%20éxito.";
-                }, 2500);
+                }, 2000);
 
             } catch (error) {
-                console.error("Error en Fase 2B (Transmisión):", error);
-                stepUpload.style.color = '#ef4444'; // Rojo
-                stepUpload.innerHTML = `<span class="icon">❌</span> <span class="text">2. Fallo de red</span>`;
-                statusTxt.innerText = "Conexión inestable. Toca 'Enviar' nuevamente para reintentar (sin reprocesar).";
-                statusTxt.style.color = "#ef4444";
-                if (activeBtn) {
-                    activeBtn.style.display = 'block';
-                    activeBtn.innerText = "Reintentar Transmisión";
-                }
+                alert("FALLO DE TRANSMISIÓN: " + (error.message || JSON.stringify(error)));
+                if (activeBtn) activeBtn.disabled = false;
             }
-        }
+        };
 
 
         // --- 5. NEUTRALIZACIÓN DE SELECTOR FANTASMA ---
