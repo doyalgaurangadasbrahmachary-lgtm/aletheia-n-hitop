@@ -461,10 +461,9 @@
 
         .card-img {
             width: 100%;
-            height: 380px;
-            max-height: 400px;
-            object-fit: contain;
-            border-radius: 10px;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            border-radius: 12px;
             border: 1px solid var(--glass-border);
             margin-top: auto;
             background: rgba(0, 0, 0, 0.2);
@@ -489,7 +488,8 @@
 /* --- RECTIFICACIÓN DE TARJETA DE CARGA --- */
 .upload-zone {
     width: 100%;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 3 / 4;
+    position: relative;
     border: 1px solid var(--glass-border);
     border-radius: 12px;
     display: flex;
@@ -502,6 +502,7 @@
     text-align: center;
     background: rgba(255, 255, 255, 0.02);
     overflow: hidden;
+    margin-top: auto;
 }
 
 /* --- SCROLLBAR DELICADO (Columna 1) --- */
@@ -586,6 +587,8 @@
             transition: all 0.3s ease;
             overflow: hidden;
             position: relative;
+            background-size: cover;
+            background-position: center;
         }
 
         .thumb-slot:hover {
@@ -929,7 +932,7 @@
             <!-- Columna 2: Ejemplo de Referencia -->
             <div class="card">
                 <div class="card-title">Ejemplo de Referencia</div>
-                <img id="ref-image" class="card-img" src="" alt="Referencia" style="width: 100%; border-radius: 12px; object-fit: contain;">
+                <img id="ref-image" class="card-img" src="" alt="Referencia" style="width: 100%; border-radius: 12px; object-fit: cover;">
             </div>
 
             <!-- Columna 3: Tu Captura -->
@@ -938,14 +941,19 @@
                 <div class="upload-zone" id="active-upload-zone" onclick="document.getElementById('file-input-active').click()">
                     <img id="active-preview" class="preview-img" style="display: none; width: 100%; height: 100%; object-fit: cover;">
                     <div id="active-placeholder">
-                        <div class="upload-icon" style="font-size: 3rem; margin-bottom: 10px;">📸</div>
-                        <div class="upload-text" style="font-weight: 500;">Toca para capturar o subir</div>
+                        <div class="upload-text" style="font-weight: 500;">Toca para cargar imagen</div>
                     </div>
-                </div>
-                
-                <div style="display: flex; gap: 10px; width: 100%; margin-top: 15px;">
-                    <button type="button" class="btn" onclick="document.getElementById('file-input-cam').click()" style="flex: 1; padding: 12px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px;">📷 Cámara</button>
-                    <button type="button" class="btn" onclick="document.getElementById('file-input-active').click()" style="flex: 1; padding: 12px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px;">📁 Galería</button>
+                    
+                    <!-- Botones Flotantes Minimalistas -->
+                    <div id="upload-controls" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: none; gap: 15px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 10px 20px; z-index: 10; align-items: center;">
+                        <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-cam').click()" style="background: none; border: none; color: #ffffff; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
+                            <span style="font-size: 1.1rem;">📷</span> Cámara
+                        </button>
+                        <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2);"></div>
+                        <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-active').click()" style="background: none; border: none; color: #ffffff; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
+                            <span style="font-size: 1.1rem;">🔄</span> Reemplazar
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Inputs ocultos para persistencia Supabase -->
@@ -1561,22 +1569,35 @@ userDataForm.addEventListener('submit', (e) => {
             const preview = document.getElementById('active-preview');
             const placeholder = document.getElementById('active-placeholder');
             const zone = document.getElementById('active-upload-zone');
+            const controls = document.getElementById('upload-controls');
             
             if (data.captured) {
                 preview.src = data.captured;
                 preview.style.display = 'block';
                 placeholder.style.display = 'none';
+                if (controls) controls.style.display = 'flex';
                 zone.style.borderColor = 'var(--primary)';
             } else {
                 preview.style.display = 'none';
                 placeholder.style.display = 'flex';
+                if (controls) controls.style.display = 'none';
                 zone.style.borderColor = 'var(--glass-border)';
             }
             
-            // Actualizar stepper
+            // Actualizar stepper (miniaturas con fotos reales)
             document.querySelectorAll('.thumb-slot').forEach((slot, i) => {
                 slot.classList.toggle('active', i === currentPhotoIndex);
-                slot.classList.toggle('has-photo', !!fotosData[i].captured);
+                const hasPhoto = !!fotosData[i].captured;
+                slot.classList.toggle('has-photo', hasPhoto);
+                
+                const label = slot.querySelector('.slot-label');
+                if (hasPhoto) {
+                    slot.style.backgroundImage = `url(${fotosData[i].captured})`;
+                    if (label) label.style.display = 'none';
+                } else {
+                    slot.style.backgroundImage = 'none';
+                    if (label) label.style.display = 'block';
+                }
             });
 
             verificarEnvioFinal();
