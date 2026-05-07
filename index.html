@@ -1033,14 +1033,22 @@
         </div>
     </div>
 
-    <div class="container success-screen" id="success-screen">
-        <div class="success-icon">✓</div>
-        <h2 id="success-title">¡Evaluación Completada!</h2>
-        <div class="progress-container" id="main-progress-container" style="display: block;">
-            <div class="progress-bar" id="main-progress-bar"></div>
+    <div class="container success-screen" id="success-screen" style="display: none;">
+        <h2 id="success-title">Procesando Envío</h2>
+        
+        <div class="resilience-flow" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; text-align: left; padding: 0 10px;">
+            <div id="step-processing" style="display: flex; align-items: center; gap: 10px; color: #888; font-weight: bold;">
+                <span class="icon">⚙️</span> <span class="text">1. Estabilizando imágenes...</span>
+            </div>
+            <div id="step-uploading" style="display: flex; align-items: center; gap: 10px; color: #888; font-weight: bold;">
+                <span class="icon">☁️</span> <span class="text">2. Sincronizando con Base de Datos...</span>
+            </div>
         </div>
-        <p id="success-msg">Tus datos han sido procesados correctamente.</p>
-        <p class="upload-status" id="upload-status-text">Iniciando transferencia segura...</p>
+
+        <div class="progress-container" id="main-progress-container" style="display: block;">
+            <div class="progress-bar" id="main-progress-bar" style="width: 0%;"></div>
+        </div>
+        <p class="upload-status" id="upload-status-text">Iniciando protocolo...</p>
     </div>
 
     <script>
@@ -1048,6 +1056,7 @@
 const urlParams = new URLSearchParams(window.location.search);
 const wa_id = urlParams.get('wa_id') || 'usuario_web_' + Date.now();
 let globalRecordId = null;
+let payloadPreparado = null; // Caché de resiliencia para reintentos
 
 const SUPABASE_URL = 'https://rfwfveaudrnughtulbco.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vhupF9kAOgV3GG-4TEMlPQ_jhqLPxY6';
@@ -1776,86 +1785,94 @@ userDataForm.addEventListener('submit', (e) => {
         }
 
         async function finalizarEvaluacion() {
-            const btnSummary = document.querySelector('.summary-footer .btn-primary');
-            const btnCapture = document.getElementById('final-send-btn');
-            const activeBtn = (btnCapture && btnCapture.style.display !== 'none') ? btnCapture : btnSummary;
-            
+            if (!globalRecordId) {
+                alert("Error crítico: Sesión huérfana."); return;
+            }
+
             const successScreen = document.getElementById('success-screen');
             const summaryContainer = document.getElementById('resumen-final');
             const photoContainer = document.getElementById('photo-capture-container');
-            const progressBar = document.getElementById('main-progress-bar');
-            const progressContainer = document.getElementById('main-progress-container');
-            const statusText = document.getElementById('upload-status-text');
-            const successMsg = document.getElementById('success-msg');
-
-            // 0. Control de Seguridad (Two-Phase Commit)
-            if (!globalRecordId) {
-                console.error("Error crítico: globalRecordId es null.");
-                alert("Error de sesión: No se encontró el registro base del test. Por favor, intente enviar sus respuestas nuevamente.");
-                if (summaryContainer) summaryContainer.style.display = 'block';
-                successScreen.style.display = 'none';
-                return;
-            }
-
-            // 1. Preparar Interfaz
-            if (activeBtn) {
-                activeBtn.classList.add('btn-sending');
-                activeBtn.innerHTML = 'Enviando...';
-            }
             
-            // Cambiar a vista de éxito/progreso
+            // Setup UI Inicial
             if (summaryContainer) summaryContainer.style.display = 'none';
             if (photoContainer) photoContainer.style.display = 'none';
             successScreen.style.display = 'flex';
-            progressContainer.style.display = 'block';
+            
+            const stepProc = document.getElementById('step-processing');
+            const stepUpload = document.getElementById('step-uploading');
+            const statusTxt = document.getElementById('upload-status-text');
+            const activeBtn = document.getElementById('final-send-btn');
+            if (activeBtn) activeBtn.style.display = 'none'; // Ocultar botón durante proceso
 
             try {
-                if (!supabaseClient) throw new Error("Supabase no configurado");
-                
-                // 3. BLOQUE 2: Partición de la Cola (Data Queuing)
-                const totalFotos = fotosData.filter(f => f.captured).length;
-                let fotosSubidas = 0;
-                
-                const fotosLigeras = fotosData.filter(foto => foto.captured && !foto.titulo.toLowerCase().includes('relajada'));
-                const fotosPesadas = fotosData.filter(foto => foto.captured && foto.titulo.toLowerCase().includes('relajada'));
+                // FASE 2A: PROCESAMIENTO CPU (Se omite si ya existe payloadPreparado en un reintento)
+                if (!payloadPreparado) {
+                    stepProc.style.color = '#eab308'; // Amarillo (En proceso)
+                    statusTxt.innerText = "Preparando motor de compresión...";
+                    payloadPreparado = [];
 
-                async function procesarCola(grupoFotos, esPesada) {
-                    for (let i = 0; i < grupoFotos.length; i++) {
-                        const foto = grupoFotos[i];
+                    for (let foto of fotosData) {
+                        if (!foto.captured) continue;
+                        const esPesada = foto.titulo.toLowerCase().includes('relajada');
                         const extension = esPesada ? 'jpg' : 'webp';
                         const mimeType = esPesada ? 'image/jpeg' : 'image/webp';
-                        
-                        // Nomenclatura estricta usando globalRecordId (Two-Phase Commit)
                         const fileName = `${wa_id}/${globalRecordId}_${foto.id}_${foto.titulo.replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
-                        
-                        let dataParaEnviar = foto.captured;
 
+                        let dataUrl = foto.captured;
                         if (!esPesada) {
-                            statusText.innerText = `Optimizando biometría (WebP): ${foto.titulo}...`;
-                            dataParaEnviar = await comprimirImagen(foto.captured, 1200, 0.8);
+                            statusTxt.innerText = `Optimizando (WebP): ${foto.titulo}...`;
+                            dataUrl = await comprimirImagen(foto.captured, 1200, 0.8);
                         }
-
-                        statusText.innerText = `Subiendo ${esPesada ? 'RAW' : 'WebP'}: ${foto.titulo} (${fotosSubidas + 1}/${totalFotos})`;
-                        const blob = await fetch(dataParaEnviar).then(res => res.blob());
-
-                        const { error: storageError } = await supabaseClient.storage
-                            .from('biometria_test')
-                            .upload(fileName, blob, {
-                                contentType: mimeType,
-                                upsert: false
-                            });
-                            
-                        if (storageError) throw storageError;
                         
-                        fotosSubidas++;
-                        const progress = (fotosSubidas / totalFotos) * 100;
-                        if (progressBar) progressBar.style.width = `${progress}%`;
+                        const blob = await fetch(dataUrl).then(res => res.blob());
+                        payloadPreparado.push({ fileName, blob, mimeType, titulo: foto.titulo });
                     }
                 }
+                
+                // Éxito Fase 2A
+                stepProc.style.color = '#22c55e'; // Verde
+                stepProc.innerHTML = `<span class="icon">✅</span> <span class="text">1. Biometría estabilizada</span>`;
 
-                // Ejecución Secuencial: Ligeras primero (éxito rápido) -> Pesadas al final
-                await procesarCola(fotosLigeras, false);
-                await procesarCola(fotosPesadas, true);
+                // FASE 2B: TRANSMISIÓN RED
+                stepUpload.style.color = '#eab308'; // Amarillo
+                let subidas = 0;
+                const total = payloadPreparado.length;
+
+                for (let item of payloadPreparado) {
+                    statusTxt.innerText = `Transmitiendo: ${item.titulo} (${subidas + 1}/${total})...`;
+                    
+                    const { error: storageError } = await supabaseClient.storage
+                        .from('biometria_test')
+                        .upload(item.fileName, item.blob, { contentType: item.mimeType, upsert: false });
+                    
+                    if (storageError) throw storageError;
+                    
+                    subidas++;
+                    document.getElementById('main-progress-bar').style.width = `${(subidas / total) * 100}%`;
+                }
+
+                // Éxito Fase 2B (Respuesta 200 implícita)
+                stepUpload.style.color = '#22c55e'; // Verde
+                stepUpload.innerHTML = `<span class="icon">✅</span> <span class="text">2. Base de datos sincronizada</span>`;
+                statusTxt.innerText = "¡Transmisión completada con éxito!";
+                document.getElementById('success-title').innerText = "¡Evaluación Exitosa!";
+                
+                setTimeout(() => {
+                    window.location.href = "whatsapp://send?text=Evaluación%20biométrica%20enviada%20con%20éxito.";
+                }, 2500);
+
+            } catch (error) {
+                console.error("Error en Fase 2B (Transmisión):", error);
+                stepUpload.style.color = '#ef4444'; // Rojo
+                stepUpload.innerHTML = `<span class="icon">❌</span> <span class="text">2. Fallo de red</span>`;
+                statusTxt.innerText = "Conexión inestable. Toca 'Enviar' nuevamente para reintentar (sin reprocesar).";
+                statusTxt.style.color = "#ef4444";
+                if (activeBtn) {
+                    activeBtn.style.display = 'block';
+                    activeBtn.innerText = "Reintentar Transmisión";
+                }
+            }
+        }
 
                 // 4. FINALIZACIÓN Y REDIRECCIÓN (SPEC-03)
                 if (progressBar) progressBar.style.width = "100%";
