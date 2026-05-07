@@ -168,12 +168,18 @@
         }
 
         .options-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto auto;
             gap: 12px;
             margin-bottom: 40px;
         }
+        /* Layout 3+2: 1,2,3 arriba; 0 y 4 abajo en los extremos */
+        .options-grid > *:nth-child(1) { grid-column: 1; grid-row: 2; } /* Opción 0 */
+        .options-grid > *:nth-child(2) { grid-column: 1; grid-row: 1; } /* Opción 1 */
+        .options-grid > *:nth-child(3) { grid-column: 2; grid-row: 1; } /* Opción 2 */
+        .options-grid > *:nth-child(4) { grid-column: 3; grid-row: 1; } /* Opción 3 */
+        .options-grid > *:nth-child(5) { grid-column: 3; grid-row: 2; } /* Opción 4 */
 
         .option-btn {
             flex: 1 1 calc(30% - 12px);
@@ -1041,6 +1047,7 @@
 // --- 1. CORE: IDENTIDAD Y PERSISTENCIA ---
 const urlParams = new URLSearchParams(window.location.search);
 const wa_id = urlParams.get('wa_id') || 'usuario_web_' + Date.now();
+let globalRecordId = null;
 
 const SUPABASE_URL = 'https://rfwfveaudrnughtulbco.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vhupF9kAOgV3GG-4TEMlPQ_jhqLPxY6';
@@ -1220,7 +1227,7 @@ function updateUI() {
                     <div style="font-size: 0.9rem; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;">Ítem ${currentPreguntaIndex + 1} de ${modulo2.length}</div>
                     <div style="font-size: 1.25rem; line-height: 1.5; margin-bottom: 30px;">${item}</div>
                     
-                    <div class="options-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 40px;">
+                    <div class="options-grid">
                         <button type="button" class="option-btn ${respuestasFinales.modulo2[id] === 0 ? 'selected' : ''}" onclick="guardarModulo2('${id}', 0)">
                             <span class="option-value">0</span>
                             <span class="option-label">Totalmente en desacuerdo</span>
@@ -1471,6 +1478,7 @@ userDataForm.addEventListener('submit', (e) => {
     
     // Validación crítica: Si el motor de base de datos no cargó, bloquear el avance.
     if (!supabaseClient) {
+        const wa_id = urlParams.get('wa_id') || '0';
         if (typeof window.supabase !== 'undefined') {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } else {
@@ -1496,9 +1504,57 @@ userDataForm.addEventListener('submit', (e) => {
     }
 });
 
-        function enviarRespuestas() {
-            mainContainer.style.display = 'none';
-            document.getElementById('instructions-container').style.display = 'block';
+        async function enviarRespuestas() {
+            try {
+                // Formateo de Payloads (Migrado de Fase 2)
+                const formatMod1 = modulo1.map(q => respuestasFinales.modulo1[q.id] || '-').join(', ');
+                const formatMod2 = modulo2.map(q => {
+                    const id = q.id;
+                    return `${id}: ${respuestasFinales.modulo2[id] ?? '-'}`;
+                }).join(', ');
+                const formatMod3 = modulo3.map((q, i) => {
+                    const r = respuestasFinales.modulo3[q.id] || {};
+                    const values = Object.values(r).filter(v => v !== null);
+                    return `Ítem ${i+1}: ${values.join(', ')}`;
+                }).join('; ');
+                const formatMod4 = modulo4.map(q => respuestasFinales.modulo4[q.id] || '-').join(', ');
+
+                const payloadEstructurado = {
+                    "Módulo I (Elección Forzada - 6 respuestas A o B)": `[${formatMod1}]`,
+                    "Módulo II (Creencias - 20 respuestas del 0 al 4)": `[${formatMod2}]`,
+                    "Módulo III (Eventos Críticos - Ramificado)": `[${formatMod3}]`,
+                    "Módulo IV (Juicio Situacional - 3 respuestas A, B o C)": `[${formatMod4}]`
+                };
+
+                // Inserción de Fase 1: Solo Texto
+                const { data, error } = await supabaseClient
+                    .from('evaluaciones_completas')
+                    .insert([{
+                        wa_id: wa_id,
+                        nombre: userData.nombre,
+                        ciudad: userData.ciudad,
+                        edad: parseInt(userData.edad),
+                        estado_civil: userData.estadoCivil,
+                        genero: userData.genero,
+                        respuestas_test: payloadEstructurado
+                    }])
+                    .select('id')
+                    .single();
+
+                if (error) throw error;
+
+                globalRecordId = data.id; // ID asegurado para la Fase 2 (Fotos)
+                console.log("Fase 1 completada. ID de Registro:", globalRecordId);
+
+                // Transición visual
+                mainContainer.style.display = 'none';
+                document.getElementById('instructions-container').style.display = 'block';
+                window.scrollTo(0, 0);
+
+            } catch (err) {
+                console.error("Error en Fase 1 (Transmisión de Texto):", err);
+                alert("Error al guardar respuestas. Por favor, verifique su conexión e intente nuevamente.");
+            }
         }
 
 
@@ -1732,6 +1788,15 @@ userDataForm.addEventListener('submit', (e) => {
             const statusText = document.getElementById('upload-status-text');
             const successMsg = document.getElementById('success-msg');
 
+            // 0. Control de Seguridad (Two-Phase Commit)
+            if (!globalRecordId) {
+                console.error("Error crítico: globalRecordId es null.");
+                alert("Error de sesión: No se encontró el registro base del test. Por favor, intente enviar sus respuestas nuevamente.");
+                if (summaryContainer) summaryContainer.style.display = 'block';
+                successScreen.style.display = 'none';
+                return;
+            }
+
             // 1. Preparar Interfaz
             if (activeBtn) {
                 activeBtn.classList.add('btn-sending');
@@ -1746,39 +1811,6 @@ userDataForm.addEventListener('submit', (e) => {
 
             try {
                 if (!supabaseClient) throw new Error("Supabase no configurado");
-
-                // --- 4. CORRECCIÓN DE MAPEO (MOD 2) ---
-                const formatMod1 = modulo1.map(q => respuestasFinales.modulo1[q.id] || '-').join(', ');
-                const formatMod2 = modulo2.map((_, i) => respuestasFinales.modulo2[`M2_P${i + 1}`] || '-').join(', ');
-                const formatMod3 = modulo3.map((q, i) => {
-                    const r = respuestasFinales.modulo3[q.id] || {};
-                    const values = Object.values(r).filter(v => v !== null);
-                    return `Ítem ${i+1}: ${values.join(', ')}`;
-                }).join('; ');
-                const formatMod4 = modulo4.map(q => respuestasFinales.modulo4[q.id] || '-').join(', ');
-
-                const payloadEstructurado = {
-                    "Módulo I (Elección Forzada - 6 respuestas A o B)": `[${formatMod1}]`,
-                    "Módulo II (Creencias - 20 respuestas del 0 al 4)": `[${formatMod2}]`,
-                    "Módulo III (Eventos Críticos - Ramificado)": `[${formatMod3}]`,
-                    "Módulo IV (Juicio Situacional - 3 respuestas A, B o C)": `[${formatMod4}]`
-                };
-
-                const { data: record, error: dbError } = await supabaseClient
-                    .from('evaluaciones_completas')
-                    .insert([{
-                        wa_id: wa_id,
-                        nombre: userData.nombre,
-                        ciudad: userData.ciudad,
-                        edad: parseInt(userData.edad),
-                        estado_civil: userData.estadoCivil,
-                        genero: userData.genero,
-                        respuestas_test: payloadEstructurado
-                    }])
-                    .select()
-                    .single();
-
-                if (dbError) throw dbError;
                 
                 // 3. BLOQUE 2: Partición de la Cola (Data Queuing)
                 const totalFotos = fotosData.filter(f => f.captured).length;
@@ -1793,8 +1825,8 @@ userDataForm.addEventListener('submit', (e) => {
                         const extension = esPesada ? 'jpg' : 'webp';
                         const mimeType = esPesada ? 'image/jpeg' : 'image/webp';
                         
-                        // Nomenclatura estricta usando record.id
-                        const fileName = `${wa_id}/${record.id}_${foto.id}_${foto.titulo.replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
+                        // Nomenclatura estricta usando globalRecordId (Two-Phase Commit)
+                        const fileName = `${wa_id}/${globalRecordId}_${foto.id}_${foto.titulo.replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
                         
                         let dataParaEnviar = foto.captured;
 
