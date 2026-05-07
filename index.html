@@ -130,7 +130,7 @@
             height: 6px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            margin: 20px 0 8px 0;
+            margin: 25px 0 8px 0;
             overflow: hidden;
             display: none;
         }
@@ -465,7 +465,6 @@
             object-fit: cover;
             border-radius: 12px;
             border: 1px solid var(--glass-border);
-            margin-top: auto;
             background: rgba(0, 0, 0, 0.2);
         }
 
@@ -502,13 +501,18 @@
     text-align: center;
     background: rgba(255, 255, 255, 0.02);
     overflow: hidden;
-    margin-top: auto;
 }
 
 /* --- SCROLLBAR DELICADO (Columna 1) --- */
-.scrollable-col::-webkit-scrollbar { width: 4px; }
-.scrollable-col::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
-.scrollable-col::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+.scrollable-content {
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.scrollable-content::-webkit-scrollbar { width: 4px; }
+.scrollable-content::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+.scrollable-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
 
         .upload-zone:hover {
             border-color: var(--primary);
@@ -733,14 +737,21 @@
                 font-size: 0.9rem !important;
             }
 
-            /* Hacer que la zona de carga sea prioritaria */
-            .card:nth-child(3) {
-                order: -1; /* Mueve la zona de carga al principio en móvil */
-            }
-
             .thumbnails-wrapper {
+                margin-top: 30px;
                 overflow-x: auto;
                 padding-bottom: 10px;
+            }
+
+            .thumbnails-wrapper::-webkit-scrollbar {
+                height: 4px; /* Minimalista */
+            }
+            .thumbnails-wrapper::-webkit-scrollbar-thumb {
+                background-color: var(--primary); /* Verde */
+                border-radius: 10px;
+            }
+            .thumbnails-wrapper::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
             }
             
             .thumbnails-grid {
@@ -938,13 +949,24 @@
             <!-- Columna 3: Tu Captura -->
             <div class="card">
                 <div class="card-title">Tu Captura</div>
-                <div class="upload-zone" id="active-upload-zone" onclick="document.getElementById('file-input-active').click()">
-                    <img id="active-preview" class="preview-img" style="display: none; width: 100%; height: 100%; object-fit: cover;">
-                    <div id="active-placeholder">
-                        <div class="upload-text" style="font-weight: 500;">Toca para cargar imagen</div>
+                <div class="upload-zone" id="active-upload-zone" onclick="revelarOpcionesCarga(event)">
+                    <div id="estado-texto" style="display: flex; align-items: center; justify-content: center; height: 100%; pointer-events: none;">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0; font-weight: 500;">Toca para capturar o cargar imagen</p>
                     </div>
+
+                    <div id="estado-controles" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); gap: 8px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 8px 12px; z-index: 10; flex-direction: row; width: max-content; max-width: 90%;">
+                        <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-cam').click()" style="background: none; border: none; color: #ffffff; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
+                            <span style="font-size: 0.9rem;">📷</span> Cámara
+                        </button>
+                        <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2);"></div>
+                        <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-active').click()" style="background: none; border: none; color: #ffffff; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
+                            <span style="font-size: 0.9rem;">📁</span> Archivo
+                        </button>
+                    </div>
+
+                    <img id="active-preview" class="preview-img" style="display: none; width: 100%; height: 100%; object-fit: cover;">
                     
-                    <!-- Botones Flotantes Minimalistas -->
+                    <!-- Botones Flotantes Minimalistas (Post-Carga) -->
                     <div id="upload-controls" style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: none; gap: 8px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 8px 12px; z-index: 10; align-items: center; width: max-content; max-width: 90%;">
                         <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-cam').click()" style="background: none; border: none; color: #ffffff; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
                             <span style="font-size: 0.9rem;">📷</span> Cámara
@@ -1574,14 +1596,18 @@ userDataForm.addEventListener('submit', (e) => {
             if (data.captured) {
                 preview.src = data.captured;
                 preview.style.display = 'block';
-                placeholder.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'none';
                 if (controls) controls.style.display = 'flex';
                 zone.style.borderColor = 'var(--primary)';
+                if(document.getElementById('estado-texto')) document.getElementById('estado-texto').style.display = 'none';
+                if(document.getElementById('estado-controles')) document.getElementById('estado-controles').style.display = 'none';
             } else {
                 preview.style.display = 'none';
-                placeholder.style.display = 'flex';
+                if (placeholder) placeholder.style.display = 'flex';
                 if (controls) controls.style.display = 'none';
                 zone.style.borderColor = 'var(--glass-border)';
+                if(document.getElementById('estado-texto')) document.getElementById('estado-texto').style.display = 'flex';
+                if(document.getElementById('estado-controles')) document.getElementById('estado-controles').style.display = 'none';
             }
             
             // Actualizar stepper (miniaturas con fotos reales)
@@ -1615,6 +1641,14 @@ userDataForm.addEventListener('submit', (e) => {
         window.selectPhoto = function(index) {
             currentPhotoIndex = index;
             updatePhotoUI();
+        };
+
+        window.revelarOpcionesCarga = function(e) {
+            const data = fotosData[currentPhotoIndex];
+            if (!data.captured) {
+                document.getElementById('estado-texto').style.display = 'none';
+                document.getElementById('estado-controles').style.display = 'flex';
+            }
         };
 
         window.procesarImagenCaptura = function(e) {
