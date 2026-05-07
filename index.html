@@ -390,7 +390,7 @@
             flex-direction: column;
             align-items: center;
             transition: all 0.3s ease;
-            height: 520px; /* Más alta y vertical */
+            height: 100%;
             justify-content: flex-start;
         }
 
@@ -945,13 +945,13 @@
                     </div>
                     
                     <!-- Botones Flotantes Minimalistas -->
-                    <div id="upload-controls" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: none; gap: 15px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 10px 20px; z-index: 10; align-items: center;">
-                        <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-cam').click()" style="background: none; border: none; color: #ffffff; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
-                            <span style="font-size: 1.1rem;">📷</span> Cámara
+                    <div id="upload-controls" style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: none; gap: 8px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 8px 12px; z-index: 10; align-items: center; width: max-content; max-width: 90%;">
+                        <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-cam').click()" style="background: none; border: none; color: #ffffff; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
+                            <span style="font-size: 0.9rem;">📷</span> Cámara
                         </button>
                         <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2);"></div>
-                        <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-active').click()" style="background: none; border: none; color: #ffffff; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
-                            <span style="font-size: 1.1rem;">🔄</span> Reemplazar
+                        <button type="button" onclick="event.stopPropagation(); document.getElementById('file-input-active').click()" style="background: none; border: none; color: #ffffff; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
+                            <span style="font-size: 0.9rem;">🔄</span> Reemplazar
                         </button>
                     </div>
                 </div>
@@ -1593,6 +1593,8 @@ userDataForm.addEventListener('submit', (e) => {
                 const label = slot.querySelector('.slot-label');
                 if (hasPhoto) {
                     slot.style.backgroundImage = `url(${fotosData[i].captured})`;
+                    slot.style.backgroundSize = 'cover';
+                    slot.style.backgroundPosition = 'center';
                     if (label) label.style.display = 'none';
                 } else {
                     slot.style.backgroundImage = 'none';
