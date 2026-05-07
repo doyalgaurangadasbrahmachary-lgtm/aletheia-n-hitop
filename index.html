@@ -1508,8 +1508,8 @@ userDataForm.addEventListener('submit', (e) => {
             try {
                 // Formateo de Payloads (Migrado de Fase 2)
                 const formatMod1 = modulo1.map(q => respuestasFinales.modulo1[q.id] || '-').join(', ');
-                const formatMod2 = modulo2.map(q => {
-                    const id = q.id;
+                const formatMod2 = modulo2.map((_, index) => {
+                    const id = `M2_P${index + 1}`;
                     return `${id}: ${respuestasFinales.modulo2[id] ?? '-'}`;
                 }).join(', ');
                 const formatMod3 = modulo3.map((q, i) => {
