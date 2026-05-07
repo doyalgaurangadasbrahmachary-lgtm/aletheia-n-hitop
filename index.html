@@ -1874,37 +1874,6 @@ userDataForm.addEventListener('submit', (e) => {
             }
         }
 
-                // 4. FINALIZACIÓN Y REDIRECCIÓN (SPEC-03)
-                if (progressBar) progressBar.style.width = "100%";
-                statusText.innerText = "¡Datos y biometría enviados exitosamente!";
-                successMsg.innerText = "La evaluación ha sido enviada con éxito. Redirigiendo...";
-                
-                setTimeout(() => {
-                    window.location.href = "whatsapp://send?text=Evaluación%20biométrica%20enviada%20con%20éxito.";
-                }, 2500);
-
-            } catch (error) {
-                console.error("Error crítico en el envío:", error);
-                statusText.innerText = "Error en el envío. Por favor, reintenta.";
-                statusText.style.color = "#ef4444";
-                progressBar.style.background = "#ef4444";
-                
-                // Permitir reintento
-                setTimeout(() => {
-                    successScreen.style.display = 'none';
-                    if (photoContainer && photoContainer.style.display === 'none' && summaryContainer) {
-                        summaryContainer.style.display = 'block';
-                    } else if (photoContainer) {
-                        photoContainer.style.display = 'block';
-                    }
-                    
-                    if (activeBtn) {
-                        activeBtn.classList.remove('btn-sending');
-                        activeBtn.innerHTML = 'Confirmar y Enviar Evaluación';
-                    }
-                }, 3000);
-            }
-        }
 
         // --- 5. NEUTRALIZACIÓN DE SELECTOR FANTASMA ---
         document.addEventListener('DOMContentLoaded', () => {
