@@ -486,31 +486,36 @@
         }
 
         /* Tarjeta de Carga */
-        .upload-zone {
-            width: 100%;
-            height: 100%;
-            min-height: 350px;
-            border: 2px dashed var(--glass-border);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            padding: 20px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.01);
-        }
+/* --- RECTIFICACIÓN DE TARJETA DE CARGA --- */
+.upload-zone {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 20px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+}
+
+/* --- SCROLLBAR DELICADO (Columna 1) --- */
+.scrollable-col::-webkit-scrollbar { width: 4px; }
+.scrollable-col::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+.scrollable-col::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
 
         .upload-zone:hover {
-            border-color: var(--glass-border);
+            border-color: var(--primary);
             background: rgba(255, 255, 255, 0.03);
         }
 
         .upload-zone.has-image {
-            border-style: solid;
-            border-color: var(--glass-border);
+            border-color: var(--primary);
         }
 
         .upload-icon {
@@ -862,30 +867,28 @@
         </div>
         
         <div class="cards-grid">
-            <!-- Columna 1: Instrucciones -->
+            <!-- Columna 1: Errores Comunes (Instrucciones Dinámicas) -->
             <div class="card">
                 <div class="card-title">Instrucciones</div>
-                <div style="padding: 10px; text-align: left; overflow-y: auto; height: 100%;">
-                    <ul class="errors-list" id="photo-instructions" style="text-align: left;">
-                        <!-- Dinámico -->
-                    </ul>
+                <div id="photo-instructions" class="scrollable-content" style="padding: 10px; text-align: left; overflow-y: auto; height: 100%;">
+                    <!-- Inyección dinámica de textos e imágenes de error -->
                 </div>
             </div>
 
-            <!-- Columna 2: Ejemplo -->
+            <!-- Columna 2: Ejemplo de Referencia -->
             <div class="card">
                 <div class="card-title">Ejemplo de Referencia</div>
-                <img id="ref-image" class="card-img" src="" alt="Referencia">
+                <img id="ref-image" class="card-img" src="" alt="Referencia" style="width: 100%; border-radius: 12px; object-fit: contain;">
             </div>
 
-            <!-- Columna 3: Captura -->
+            <!-- Columna 3: Tu Captura -->
             <div class="card">
                 <div class="card-title">Tu Captura</div>
                 <div class="upload-zone" id="active-upload-zone" onclick="document.getElementById('file-input-active').click()">
-                    <img id="active-preview" class="preview-img" style="display: none;">
+                    <img id="active-preview" class="preview-img" style="display: none; width: 100%; height: 100%; object-fit: cover;">
                     <div id="active-placeholder">
-                        <div class="upload-icon">📸</div>
-                        <div class="upload-text">Toca para capturar o subir</div>
+                        <div class="upload-icon" style="font-size: 3rem; margin-bottom: 10px;">📸</div>
+                        <div class="upload-text" style="font-weight: 500;">Toca para capturar o subir</div>
                     </div>
                 </div>
                 
@@ -894,16 +897,17 @@
                     <button type="button" class="btn" onclick="document.getElementById('file-input-active').click()" style="flex: 1; padding: 12px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px;">📁 Galería</button>
                 </div>
                 
+                <!-- Inputs ocultos para persistencia Supabase -->
                 <input type="file" id="file-input-cam" accept="image/*" capture="environment" style="display: none;" onchange="procesarImagenCaptura(event)">
                 <input type="file" id="file-input-active" accept="image/*" style="display: none;" onchange="procesarImagenCaptura(event)">
             </div>
         </div>
 
         <!-- Stepper / Navegación Inferior -->
-        <div class="thumbnails-wrapper">
+        <div class="thumbnails-wrapper" style="margin-top: 40px;">
             <div class="thumb-group">
-                <div class="thumb-group-title">Mano Derecha</div>
-                <div class="thumbnails-grid" id="thumbs-derecha">
+                <div class="thumb-group-title" style="color: var(--primary); font-weight: 600; margin-bottom: 10px; text-align: center;">Mano Derecha</div>
+                <div id="thumbs-derecha" class="thumbnails-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                     <div class="thumb-slot" id="thumb-0" onclick="selectPhoto(0)"><span class="slot-label">1D</span></div>
                     <div class="thumb-slot" id="thumb-1" onclick="selectPhoto(1)"><span class="slot-label">2D</span></div>
                     <div class="thumb-slot" id="thumb-2" onclick="selectPhoto(2)"><span class="slot-label">3D</span></div>
@@ -911,8 +915,8 @@
                 </div>
             </div>
             <div class="thumb-group">
-                <div class="thumb-group-title">Mano Izquierda</div>
-                <div class="thumbnails-grid" id="thumbs-izquierda">
+                <div class="thumb-group-title" style="color: var(--primary); font-weight: 600; margin-bottom: 10px; text-align: center;">Mano Izquierda</div>
+                <div id="thumbs-izquierda" class="thumbnails-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                     <div class="thumb-slot" id="thumb-4" onclick="selectPhoto(4)"><span class="slot-label">1I</span></div>
                     <div class="thumb-slot" id="thumb-5" onclick="selectPhoto(5)"><span class="slot-label">2I</span></div>
                     <div class="thumb-slot" id="thumb-6" onclick="selectPhoto(6)"><span class="slot-label">3I</span></div>
@@ -1447,7 +1451,42 @@ userDataForm.addEventListener('submit', (e) => {
             
             if (titleEl) titleEl.textContent = `Captura ${data.id}: ${data.titulo}`;
             if (descEl) descEl.textContent = data.desc;
-            if (instrList) instrList.innerHTML = data.instructions.map(i => `<li>${i}</li>`).join('');
+    // Inyección de Errores Comunes
+    const instrList = document.getElementById('photo-instructions');
+    if (instrList) {
+        instrList.classList.add('scrollable-col');
+        instrList.style.maxHeight = '60vh'; 
+        instrList.style.overflowY = 'auto';
+        instrList.style.paddingRight = '10px';
+        
+        instrList.innerHTML = `
+            <h3 style="color: var(--primary); font-size: 1.2rem; margin-bottom: 15px; font-weight: 700;">Errores Comunes</h3>
+            <div style="display: flex; flex-direction: column; gap: 20px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #ddd;">
+                <div>
+                    <strong style="color: #ff4444;">Fondo:</strong> Usa un fondo liso detrás de la mano.
+                    <div style="margin-top: 8px;"><img src="imagenes/fondo.webp" alt="Fondo" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);"></div>
+                </div>
+                <div>
+                    <strong style="color: #ff4444;">Posición:</strong> No dejes la mano caída; mantenla firme para la toma.
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <img src="imagenes/posicion.webp" alt="Posición 1" style="width: 48%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);">
+                        <img src="imagenes/posicio2.webp" alt="Posición 2" style="width: 48%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);">
+                    </div>
+                </div>
+                <div>
+                    <strong style="color: #ff4444;">Centrado:</strong> Evita fotos descentralizadas.
+                    <div style="margin-top: 8px;"><img src="imagenes/centrado.webp" alt="Centrado" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);"></div>
+                </div>
+                <div>
+                    <strong style="color: #ff4444;">Extensión:</strong> Separa bien los dedos, especialmente en la foto del dorso.
+                    <div style="margin-top: 8px;"><img src="imagenes/extension.webp" alt="Extensión" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);"></div>
+                </div>
+                <div>
+                    <strong style="color: #ff4444;">Integridad:</strong> La foto debe mostrar la mano completa, desde la punta de los dedos hasta la muñeca.
+                </div>
+            </div>
+        `;
+    }
             if (refImg) refImg.src = data.refImg;
             
             const preview = document.getElementById('active-preview');
