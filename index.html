@@ -52,6 +52,7 @@
             background-repeat: no-repeat;
             animation: heartbeat 40s infinite alternate ease-in-out;
             transform-origin: center;
+            will-change: transform;
         }
 
         @keyframes heartbeat {
@@ -126,11 +127,10 @@
 
         .progress-container {
             width: 100%;
-            max-width: 300px;
             height: 6px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            margin: 20px 0;
+            margin: 20px 0 8px 0;
             overflow: hidden;
             display: none;
         }
@@ -403,7 +403,7 @@
             font-size: 1.1rem;
             color: var(--primary);
             margin-bottom: 15px;
-            font-weight: 600;
+            font-weight: 700;
             text-align: center;
         }
 
@@ -655,6 +655,12 @@
             margin-bottom: 25px;
         }
 
+        .mobile-header-content {
+            display: none;
+            width: 100%;
+            text-align: center;
+        }
+
         /* Botón Enviar Superior */
         .top-actions {
             display: flex;
@@ -676,6 +682,12 @@
         }
 
         @media (max-width: 768px) {
+            .bg-image {
+                background-image: linear-gradient(rgba(9, 9, 11, 0.5), rgba(9, 9, 11, 0.5)), 
+                                  url('imagenes/fondo_celular.webp');
+                background-position: center bottom;
+                background-size: cover;
+            }
             .cards-grid {
                 grid-template-columns: 1fr;
             }
@@ -737,6 +749,43 @@
             .nav-arrow {
                 width: 45px !important;
                 height: 45px !important;
+            }
+
+            .mobile-header-content {
+                display: block;
+            }
+
+            .thumbnails-wrapper {
+                gap: 0 !important; /* Elimina separación entre grupos */
+                justify-content: space-around;
+                margin-top: 20px;
+            }
+
+            .thumb-group {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .thumb-group-title {
+                display: none; /* Ocultamos títulos internos para compactar el bloque */
+            }
+
+            .thumbnails-grid {
+                gap: 5px !important; /* Espaciado mínimo entre slots */
+            }
+
+            .footer-nav-container {
+                display: flex !important;
+                gap: 20px !important;
+            }
+
+            .footer-nav-container #footer-photo-title,
+            .footer-nav-container #footer-photo-desc {
+                display: none !important; /* Ocultamos título de foto en footer móvil */
+            }
+
+            #footer-hand-title {
+                display: block !important; /* Mostramos solo el nombre de la mano */
             }
         }
     </style>
@@ -862,14 +911,16 @@
     <!-- Sección de Captura de Fotos (Restaurada a 3 Columnas + Stepper) -->
     <div id="photo-capture-container" style="display: none;">
         <div class="capture-header">
-            <h2 id="photo-section-title" style="margin: 0; color: var(--primary); font-size: 1.8rem; font-weight: 700;">Captura Biométrica</h2>
-            <p id="photo-section-desc" style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 1.1rem;">Sigue las instrucciones y el ejemplo para cada una de las 8 capturas.</p>
+            <div class="mobile-header-content">
+                <h2 id="mobile-photo-title" style="color: var(--primary); font-size: 1.5rem; font-weight: 700; text-transform: uppercase; margin-bottom: 5px;"></h2>
+                <p id="mobile-photo-desc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;"></p>
+            </div>
         </div>
         
         <div class="cards-grid">
             <!-- Columna 1: Errores Comunes (Instrucciones Dinámicas) -->
             <div class="card">
-                <div class="card-title">Instrucciones</div>
+                <div class="card-title">Errores Comunes</div>
                 <div id="photo-instructions" class="scrollable-content" style="padding: 10px; text-align: left; overflow-y: auto; height: 100%;">
                     <!-- Inyección dinámica de textos e imágenes de error -->
                 </div>
@@ -923,6 +974,18 @@
                     <div class="thumb-slot" id="thumb-7" onclick="selectPhoto(7)"><span class="slot-label">4I</span></div>
                 </div>
             </div>
+        </div>
+
+        <div class="footer-nav-container" style="margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%;">
+            <button class="nav-arrow prev" onclick="changePhoto(-1)" style="background: none; border: none; color: var(--primary); font-size: 2rem; cursor: pointer;"> < </button>
+
+            <div class="footer-text-container" style="text-align: center; max-width: 600px;">
+                <div id="footer-hand-title" class="mobile-only-hand" style="color: var(--primary); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 1.1rem; display: none;"></div>
+                <h3 id="footer-photo-title" style="margin: 0; color: var(--primary); font-size: 1.4rem; font-weight: 700; text-transform: uppercase;"></h3>
+                <p id="footer-photo-desc" style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 1rem; line-height: 1.4;"></p>
+            </div>
+
+            <button class="nav-arrow next" onclick="changePhoto(1)" style="background: none; border: none; color: var(--primary); font-size: 2rem; cursor: pointer;"> > </button>
         </div>
 
         <div style="text-align: center; margin-top: 30px;">
@@ -1444,12 +1507,19 @@ userDataForm.addEventListener('submit', (e) => {
 
         function updatePhotoUI() {
             const data = fotosData[currentPhotoIndex];
-            const titleEl = document.getElementById('photo-section-title');
-            const descEl = document.getElementById('photo-section-desc');
+            const titleEl = document.getElementById('footer-photo-title');
+            const descEl = document.getElementById('footer-photo-desc');
+            const handEl = document.getElementById('footer-hand-title');
+            const mobileTitleEl = document.getElementById('mobile-photo-title');
+            const mobileDescEl = document.getElementById('mobile-photo-desc');
             const refImg = document.getElementById('ref-image');
             
             if (titleEl) titleEl.textContent = `Captura ${data.id}: ${data.titulo}`;
             if (descEl) descEl.textContent = data.desc;
+            if (handEl) handEl.textContent = currentPhotoIndex < 4 ? "Mano Derecha" : "Mano Izquierda";
+            if (mobileTitleEl) mobileTitleEl.textContent = `Captura ${data.id}: ${data.titulo}`;
+            if (mobileDescEl) mobileDescEl.textContent = data.desc;
+            if (refImg) refImg.src = data.refImg;
     // Inyección de Errores Comunes
     const instrList = document.getElementById('photo-instructions');
     if (instrList) {
@@ -1459,29 +1529,29 @@ userDataForm.addEventListener('submit', (e) => {
         instrList.style.paddingRight = '10px';
         
         instrList.innerHTML = `
-            <h3 style="color: var(--primary); font-size: 1.2rem; margin-bottom: 15px; font-weight: 700;">Errores Comunes</h3>
             <div style="display: flex; flex-direction: column; gap: 20px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #ddd;">
                 <div>
-                    <strong style="color: #ff4444;">Fondo:</strong> Usa un fondo liso detrás de la mano.
-                    <div style="margin-top: 8px;"><img src="imagenes/fondo.webp" alt="Fondo" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);"></div>
+                    <strong style="color: var(--primary);">Fondo:</strong> Usa un fondo liso detrás de la mano.
+                    <div style="margin-top: 8px;"><img src="imagenes/fondo.webp" alt="Fondo" style="width: 100%; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.4);"></div>
                 </div>
                 <div>
-                    <strong style="color: #ff4444;">Posición:</strong> No dejes la mano caída; mantenla firme para la toma.
+                    <strong style="color: var(--primary);">Posición:</strong> No dejes la mano caída; mantenla firme para la toma.
                     <div style="display: flex; gap: 10px; margin-top: 8px;">
-                        <img src="imagenes/posicion.webp" alt="Posición 1" style="width: 48%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);">
-                        <img src="imagenes/posicio2.webp" alt="Posición 2" style="width: 48%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);">
+                        <img src="imagenes/posicion.webp" alt="Posición 1" style="width: 48%; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.4);">
+                        <img src="imagenes/posicio2.webp" alt="Posición 2" style="width: 48%; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.4);">
                     </div>
                 </div>
                 <div>
-                    <strong style="color: #ff4444;">Centrado:</strong> Evita fotos descentralizadas.
-                    <div style="margin-top: 8px;"><img src="imagenes/centrado.webp" alt="Centrado" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);"></div>
+                    <strong style="color: var(--primary);">Centrado:</strong> Evita fotos descentralizadas.
+                    <div style="margin-top: 8px;"><img src="imagenes/centrado.webp" alt="Centrado" style="width: 100%; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.4);"></div>
                 </div>
                 <div>
-                    <strong style="color: #ff4444;">Extensión:</strong> Separa bien los dedos, especialmente en la foto del dorso.
-                    <div style="margin-top: 8px;"><img src="imagenes/extension.webp" alt="Extensión" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,68,68,0.4);"></div>
+                    <strong style="color: var(--primary);">Extensión:</strong> Separa bien los dedos, especialmente en la foto del dorso.
+                    <div style="margin-top: 8px;"><img src="imagenes/extension.webp" alt="Extensión" style="width: 100%; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.4);"></div>
                 </div>
                 <div>
-                    <strong style="color: #ff4444;">Integridad:</strong> La foto debe mostrar la mano completa, desde la punta de los dedos hasta la muñeca.
+                    <strong style="color: var(--primary);">Integridad:</strong> La foto debe mostrar la mano completa, desde la punta de los dedos hasta la muñeca.
+                    <div style="margin-top: 8px;"><img src="imagenes/integridad.webp" alt="Integridad" style="width: 100%; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.4);"></div>
                 </div>
             </div>
         `;
@@ -1510,6 +1580,13 @@ userDataForm.addEventListener('submit', (e) => {
             });
 
             verificarEnvioFinal();
+        }
+
+        function changePhoto(direction) {
+            currentPhotoIndex += direction;
+            if (currentPhotoIndex < 0) currentPhotoIndex = fotosData.length - 1;
+            if (currentPhotoIndex >= fotosData.length) currentPhotoIndex = 0;
+            updatePhotoUI();
         }
 
         window.selectPhoto = function(index) {
