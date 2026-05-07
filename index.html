@@ -1198,13 +1198,13 @@ if (typeof window.supabase !== 'undefined') {
 
 // --- 3. MOTOR DE INTERFAZ Y PROGRESO ---
 function getProgresoTotal() {
-    const totalPreguntas = (modulo1?.length || 0) + (modulo2?.length || 0) + (modulo3?.length || 0) + (modulo4?.length || 0);
+    const totalPreguntas = (modulo1 ? modulo1.length : 0) + (modulo2 ? modulo2.length : 0) + (modulo3 ? modulo3.length : 0) + (modulo4 ? modulo4.length : 0);
     let respondidas = 0;
     
-    respondidas += Object.keys(respuestasFinales?.modulo1 || {}).length;
-    respondidas += Object.keys(respuestasFinales?.modulo2 || {}).length;
-    respondidas += Object.keys(respuestasFinales?.modulo3 || {}).length;
-    respondidas += Object.keys(respuestasFinales?.modulo4 || {}).length;
+    respondidas += Object.keys((respuestasFinales && respuestasFinales.modulo1) ? respuestasFinales.modulo1 : {}).length;
+    respondidas += Object.keys((respuestasFinales && respuestasFinales.modulo2) ? respuestasFinales.modulo2 : {}).length;
+    respondidas += Object.keys((respuestasFinales && respuestasFinales.modulo3) ? respuestasFinales.modulo3 : {}).length;
+    respondidas += Object.keys((respuestasFinales && respuestasFinales.modulo4) ? respuestasFinales.modulo4 : {}).length;
     
     return { respondidas, totalPreguntas };
 }
@@ -1517,38 +1517,42 @@ function updateUI() {
         prevBtn.addEventListener('click', retroceder);
         nextBtn.addEventListener('click', avanzar);
 
-        const preFormContainer = document.getElementById('pre-form-container');
-        const userDataForm = document.getElementById('user-data-form');
-
 // --- 2. TRANSICIÓN Y VALIDACIÓN DE RED ---
-userDataForm.addEventListener('submit', (e) => {
-    e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+    const preFormContainer = document.getElementById('pre-form-container');
+    const userDataForm = document.getElementById('user-data-form');
     
-    // Validación crítica: Si el motor de base de datos no cargó, bloquear el avance.
-    if (!supabaseClient) {
-        const wa_id = urlParams.get('wa_id') || '0';
-        if (typeof window.supabase !== 'undefined') {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } else {
-            alert("Error de conexión: No se pudo establecer enlace con el servidor seguro. Por favor, recargue la página o verifique su conexión a internet.");
-            return; // Bloquea la transición para evitar pérdida de datos
-        }
-    }
+    if (userDataForm) {
+        userDataForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Validación crítica: Si el motor de base de datos no cargó, bloquear el avance.
+            if (!supabaseClient) {
+                const wa_id_local = urlParams.get('wa_id') || '0';
+                if (typeof window.supabase !== 'undefined') {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                } else {
+                    alert("Error de conexión: No se pudo establecer enlace con el servidor seguro. Por favor, recargue la página o verifique su conexión a internet.");
+                    return; // Bloquea la transición para evitar pérdida de datos
+                }
+            }
 
-    userData = {
-        nombre: document.getElementById('user-name')?.value || 'Anónimo',
-        ciudad: document.getElementById('user-city')?.value || 'No definida',
-        edad: document.getElementById('user-age')?.value || '0',
-        estadoCivil: document.getElementById('user-status')?.value || 'No especificado',
-        genero: document.getElementById('user-gender')?.value || 'No especificado',
-        wa_id: wa_id
-    };
-    
-    if (preFormContainer && mainContainer) {
-        preFormContainer.style.display = 'none';
-        mainContainer.style.display = 'block';
-        window.scrollTo(0, 0);
-        updateUI();
+            userData = {
+                nombre: (document.getElementById('user-name') && document.getElementById('user-name').value) ? document.getElementById('user-name').value : 'Anónimo',
+                ciudad: (document.getElementById('user-city') && document.getElementById('user-city').value) ? document.getElementById('user-city').value : 'No definida',
+                edad: (document.getElementById('user-age') && document.getElementById('user-age').value) ? document.getElementById('user-age').value : '0',
+                estadoCivil: (document.getElementById('user-status') && document.getElementById('user-status').value) ? document.getElementById('user-status').value : 'No especificado',
+                genero: (document.getElementById('user-gender') && document.getElementById('user-gender').value) ? document.getElementById('user-gender').value : 'No especificado',
+                wa_id: wa_id
+            };
+            
+            if (preFormContainer && mainContainer) {
+                preFormContainer.style.display = 'none';
+                mainContainer.style.display = 'block';
+                window.scrollTo(0, 0);
+                updateUI();
+            }
+        });
     }
 });
 
@@ -1558,7 +1562,7 @@ userDataForm.addEventListener('submit', (e) => {
                 const formatMod1 = modulo1.map(q => respuestasFinales.modulo1[q.id] || '-').join(', ');
                 const formatMod2 = modulo2.map((_, index) => {
                     const id = `M2_P${index + 1}`;
-                    return `${id}: ${respuestasFinales.modulo2[id] ?? '-'}`;
+                    return `${id}: ${(respuestasFinales.modulo2[id] !== undefined) ? respuestasFinales.modulo2[id] : '-'}`;
                 }).join(', ');
                 const formatMod3 = modulo3.map((q, i) => {
                     const r = respuestasFinales.modulo3[q.id] || {};
