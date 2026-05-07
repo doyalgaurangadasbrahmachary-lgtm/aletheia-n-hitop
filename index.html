@@ -1744,6 +1744,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Auto-scroll de miniaturas para asegurar visibilidad del destaque
+            const activeSlot = document.querySelectorAll('.thumb-slot')[currentPhotoIndex];
+            if (activeSlot) {
+                activeSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+
             verificarEnvioFinal();
         }
 
