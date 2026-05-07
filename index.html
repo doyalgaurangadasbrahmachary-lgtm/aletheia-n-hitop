@@ -1916,12 +1916,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     successTitle.style.color = '#10b981';
                 }
 
-                if (statusTxt) statusTxt.innerText = "¡Transmisión finalizada con éxito!";
+                if (statusTxt) statusTxt.innerText = "¡Transmisión finalizada con éxito! Ya puedes cerrar esta ventana.";
                 
-                // Redirección directa a WhatsApp usando protocolo seguro (sin alerta que la bloquee)
+                // Intento de cierre automático de la ventana (funciona en algunos in-app browsers)
                 setTimeout(() => {
-                    window.location.href = "https://wa.me/?text=Evaluaci%C3%B3n%20biom%C3%A9trica%20enviada%20con%20%C3%A9xito.";
-                }, 1500);
+                    try {
+                        window.close();
+                    } catch(e) {
+                        console.log("Cierre automático bloqueado por el navegador.");
+                    }
+                }, 2500);
 
             } catch (error) {
                 alert("FALLO DE TRANSMISIÓN: " + (error.message || JSON.stringify(error)));
