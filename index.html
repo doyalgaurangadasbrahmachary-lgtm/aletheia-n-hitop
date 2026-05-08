@@ -1576,10 +1576,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const formatMod4 = modulo4.map(q => respuestasFinales.modulo4[q.id] || '-').join(', ');
 
                 const payloadEstructurado = {
-                    "Módulo I (Elección Forzada - 6 respuestas A o B)": `[${formatMod1}]`,
-                    "Módulo II (Creencias - 20 respuestas del 0 al 4)": `[${formatMod2}]`,
-                    "Módulo III (Eventos Críticos - Ramificado)": `[${formatMod3}]`,
-                    "Módulo IV (Juicio Situacional - 3 respuestas A, B o C)": `[${formatMod4}]`
+                    modulo1: formatMod1,
+                    modulo2: formatMod2,
+                    modulo3: formatMod3,
+                    modulo4: formatMod4
                 };
 
                 // Inserción de Fase 1: Solo Texto
