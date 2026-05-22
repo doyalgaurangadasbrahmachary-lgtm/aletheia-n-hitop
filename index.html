@@ -1520,8 +1520,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     wa_id: wa_id
                 };
                 
-                const payloadEstructurado = { modulo1: '-', modulo2: '-', modulo3: '-', modulo4: '-' };
-                
                 const { data, error } = await supabaseClient
                     .from('evaluaciones_completas')
                     .insert([{
@@ -1530,8 +1528,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ciudad: userData.ciudad,
                         edad: parseInt(userData.edad),
                         estado_civil: userData.estadoCivil,
-                        genero: userData.genero,
-                        respuestas_test: payloadEstructurado
+                        genero: userData.genero
                     }])
                     .select('id')
                     .single();
@@ -1575,7 +1572,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     modulo4: formatMod4
                 };
 
-                // Inserción de Fase 1: Solo Texto
                 const { data, error } = await supabaseClient
                     .from('evaluaciones_completas')
                     .insert([{
@@ -1584,8 +1580,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ciudad: userData.ciudad,
                         edad: parseInt(userData.edad),
                         estado_civil: userData.estadoCivil,
-                        genero: userData.genero,
-                        respuestas_test: payloadEstructurado
+                        genero: userData.genero
                     }])
                     .select('id')
                     .single();

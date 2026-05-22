@@ -8,6 +8,7 @@
 - **Seguridad de Datos y RLS:** Se activó Row Level Security (RLS) en la tabla `evaluaciones_completas` para prevenir accesos no autorizados desde el Frontend.
 - **Resolución de Bug Crítico de Transición (Formulario):** Se identificó y resolvió un `TypeError` fatal de JavaScript. Al eliminarse `#main-container`, las variables `prevBtn` y `nextBtn` valían `null`, lo que rompía la inicialización al registrar `addEventListener` sin comprobar existencia. Se añadieron validaciones condicionales `if (prevBtn)` e `if (nextBtn)`.
 - **Diagnóstico de RLS en Inserción:** Se identificó que al estar activo el RLS con política exclusiva de `INSERT` para `anon`, la llamada `.select('id').single()` fallará por falta de permisos de lectura (`SELECT`). Se documentó la política correctiva para Supabase.
+- **Remoción de Columnas de Test Obsoleto:** Se eliminó el envío de la propiedad `respuestas_test` del objeto de inserción en el frontend (`index.html`) para evitar mandar payloads vacíos o redundantes y allanar el camino a la simplificación definitiva de la base de datos.
 
 ## Progreso de Hoy (2026-05-15)
 - **Skill de Extracción Autónoma (v1.2):** Se implementó y validó el flujo de extracción "Plug & Play". El agente ahora puede generar prompts íntegros de forma autónoma siguiendo el `PROTOCOLO_EXTRACCION_PROMPT.md`.
