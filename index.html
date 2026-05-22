@@ -1487,8 +1487,8 @@ function updateUI() {
             updateUI();
         }
 
-        prevBtn.addEventListener('click', retroceder);
-        nextBtn.addEventListener('click', avanzar);
+        if (prevBtn) prevBtn.addEventListener('click', retroceder);
+        if (nextBtn) nextBtn.addEventListener('click', avanzar);
 
 // --- 2. TRANSICIÓN Y VALIDACIÓN DE RED ---
 document.addEventListener('DOMContentLoaded', () => {

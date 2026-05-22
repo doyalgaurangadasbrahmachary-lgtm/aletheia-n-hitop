@@ -1,34 +1,63 @@
 # Estado del Repositorio: Aletheia-N (B-HiTOP)
-**Fecha Actual:** 2026-05-07
-**Estado:** Optimizado y Desplegado ? (ResoluciÛn CrÌtica Mobile)
+**Fecha Actual:** 2026-05-22
+**Estado:** Simplificado (Form -> Biometr√≠a) y RLS Activo
 
-## Progreso de Hoy (2026-05-07)
-SesiÛn crÌtica enfocada en la **EstabilizaciÛn de UX en Entornos MÛviles y CorrecciÛn de Bugs de NavegaciÛn**. Se logrÛ una experiencia de usuario fluida, segura y libre de fricciones tÈcnicas en la recolecciÛn biomÈtrica.
+## Progreso de Hoy (2026-05-22)
+- **Simplificaci√≥n del Flujo:** Se elimin√≥ el m√≥dulo completo de evaluaci√≥n (examen). El flujo ahora pasa directamente del formulario de registro inicial a la recolecci√≥n de datos biom√©tricos.
+- **Optimizaci√≥n de Interfaz:** Se ocult√≥ el contenedor principal del examen y se ajust√≥ el bot√≥n de inicio a "Pasar a recolecci√≥n de datos biom√©tricos".
+- **Seguridad de Datos y RLS:** Se activ√≥ Row Level Security (RLS) en la tabla `evaluaciones_completas` para prevenir accesos no autorizados desde el Frontend.
+- **Resoluci√≥n de Bug Cr√≠tico de Transici√≥n (Formulario):** Se identific√≥ y resolvi√≥ un `TypeError` fatal de JavaScript. Al eliminarse `#main-container`, las variables `prevBtn` y `nextBtn` val√≠an `null`, lo que romp√≠a la inicializaci√≥n al registrar `addEventListener` sin comprobar existencia. Se a√±adieron validaciones condicionales `if (prevBtn)` e `if (nextBtn)`.
+- **Diagn√≥stico de RLS en Inserci√≥n:** Se identific√≥ que al estar activo el RLS con pol√≠tica exclusiva de `INSERT` para `anon`, la llamada `.select('id').single()` fallar√° por falta de permisos de lectura (`SELECT`). Se document√≥ la pol√≠tica correctiva para Supabase.
 
-### 1. EstabilizaciÛn de NavegaciÛn y UI T·ctil
-- **CorrecciÛn Scope FunciÛn changePhoto:** Se extrajo la funciÛn changePhoto del bloque DOMContentLoaded exponiÈndola al scope global (window.changePhoto), lo cual restaurÛ instant·neamente la interactividad de ambas flechas de navegaciÛn en el DOM.
-- **Auto-Scroll Inteligente en Miniaturas:** Se inyectÛ scrollIntoView({ behavior: 'smooth', inline: 'center' }) en updatePhotoUI(), logrando que la barra de miniaturas horizontales se desplace autom·ticamente siguiendo a la miniatura activa.
-- **RediseÒo ArquitectÛnico del Contenedor de Flechas:** Se sustituyÛ justify-content: center por space-between con padding seguro. Esto evita el "overflow ciego" en pantallas de 320px que provocaba toques fantasma a la miniatura 1 en lugar de a la flecha izquierda.
-- **EstÈtica Neutra de Botones:** Se transformaron las flechas < y > en cÛdigos Unicode robustos (&#10094;, &#10095;) dentro de contenedores circulares (50x50px) con estilo "Gris Transl˙cido" (gba(128, 128, 128, 0.15)) y z-index blindado (50), manteniendo el diseÒo cinem·tico sin desviar la atenciÛn.
+## Progreso de Hoy (2026-05-15)
+- **Skill de Extracci√≥n Aut√≥noma (v1.2):** Se implement√≥ y valid√≥ el flujo de extracci√≥n "Plug & Play". El agente ahora puede generar prompts √≠ntegros de forma aut√≥noma siguiendo el `PROTOCOLO_EXTRACCION_PROMPT.md`.
+- **Optimizaci√≥n para NotebookLM:** Se eliminaron las etiquetas de control `[INICIO/FIN]` del archivo maestro y del protocolo para resolver problemas de compatibilidad y permitir el procesamiento directo de la matriz de datos.
+- **Casos de √âxito:** Validada la extracci√≥n y ensamblaje para los clientes **Juan Rojas** y **ORUS PE√ëA**.
+- **Auditor√≠a de Seguridad:** Se identific√≥ la falta de RLS en la tabla `evaluaciones_completas`.
 
-### 2. Optimizaciones CrÌticas de Rendimiento
-- **GestiÛn OOM (Out Of Memory):** Se reestructurÛ la funciÛn inalizarEvaluacion() implementando una subida de im·genes "1 a 1" (Serial) a Supabase. Inmediatamente despuÈs de subir cada Base64, se libera la memoria destructivamente (delete fotosData[i].captured), evitando cierres forzados por falta de RAM en navegadores mÛviles (In-App Browsers).
-- **Limpieza de Alertas Intrusivas:** Se erradicaron los lert() de depuraciÛn que bloqueaban el hilo principal en dispositivos mÛviles.
+## Progreso Anterior (2026-05-08)
+Sesi√≥n enfocada en la **Optimizaci√≥n del Flujo de Datos y Generaci√≥n de Prompts para IA**. Se logr√≥ establecer una arquitectura que conecta la salida limpia de B-HiTOP con NotebookLM a trav√©s del Dashboard.
+
+### 1. Refactorizaci√≥n del Payload (Supabase)
+- **Simplificaci√≥n JSON:** Se modific√≥ `index.html` para reemplazar claves descriptivas largas por identificadores cortos (`modulo1`, `modulo2`, etc.) en el objeto enviado a Supabase.
+- **Validaci√≥n Estructural:** Se confirm√≥ que la tabla `evaluaciones_completas` asimila el nuevo formato sin romper el esquema.
+
+### 2. Arquitectura de Prompts (Dashboard -> NotebookLM)
+- **Prueba de Inferencia Cl√≠nica Exitosa:** Se valid√≥ que NotebookLM decodifica la nueva estructura con 100% de adherencia a las instrucciones, infiriendo perfiles psicopatol√≥gicos complejos sin alucinar y respetando la topolog√≠a de la matriz.
+- **Desacoplamiento de L√≥gica:** Se determin√≥ que la construcci√≥n del prompt final debe vivir en el Dashboard y no en la app m√≥vil.
+
+### 3. Documentaci√≥n T√©cnica Creada
+- **`INSTRUCCIONES_DASHBOARD_PROMPT.md`**: Se gener√≥ el documento maestro con la plantilla del prompt, las instrucciones exactas de mapeo y las directrices de UI (bot√≥n de copiado al portapapeles) para el agente del Dashboard.
+
+---
+
+## Progreso Anterior (2026-05-07)
+Sesi√≥n cr√≠tica enfocada en la **Estabilizaci√≥n de UX en Entornos M√≥viles y Correcci√≥n de Bugs de Navegaci√≥n**. Se logr√≥ una experiencia de usuario fluida, segura y libre de fricciones t√©cnicas en la recolecci√≥n biom√©trica.
+
+### 1. Estabilizaci√≥n de Navegaci√≥n y UI T√°ctil
+- **Correcci√≥n Scope Funci√≥n changePhoto:** Se extrajo la funci√≥n changePhoto del bloque DOMContentLoaded exponi√©ndola al scope global (window.changePhoto), lo cual restaur√≥ instant√°neamente la interactividad de ambas flechas de navegaci√≥n en el DOM.
+- **Auto-Scroll Inteligente en Miniaturas:** Se inyect√≥ scrollIntoView({ behavior: 'smooth', inline: 'center' }) en updatePhotoUI(), logrando que la barra de miniaturas horizontales se desplace autom√°ticamente siguiendo a la miniatura activa.
+- **Redise√±o Arquitect√≥nico del Contenedor de Flechas:** Se sustituy√≥ justify-content: center por space-between con padding seguro. Esto evita el "overflow ciego" en pantallas de 320px que provocaba toques fantasma a la miniatura 1 en lugar de a la flecha izquierda.
+- **Est√©tica Neutra de Botones:** Se transformaron las flechas < y > en c√≥digos Unicode robustos (&#10094;, &#10095;) dentro de contenedores circulares (50x50px) con estilo "Gris Transl√∫cido" (gba(128, 128, 128, 0.15)) y z-index blindado (50), manteniendo el dise√±o cinem√°tico sin desviar la atenci√≥n.
+
+### 2. Optimizaciones Cr√≠ticas de Rendimiento
+- **Gesti√≥n OOM (Out Of Memory):** Se reestructur√≥ la funci√≥n inalizarEvaluacion() implementando una subida de im√°genes "1 a 1" (Serial) a Supabase. Inmediatamente despu√©s de subir cada Base64, se libera la memoria destructivamente (delete fotosData[i].captured), evitando cierres forzados por falta de RAM en navegadores m√≥viles (In-App Browsers).
+- **Limpieza de Alertas Intrusivas:** Se erradicaron los  lert() de depuraci√≥n que bloqueaban el hilo principal en dispositivos m√≥viles.
 
 ### 3. Cierre de Ciclo del Usuario
-- **Window Auto-Close:** Se reemplazÛ la redirecciÛn conflictiva hacia WhatsApp (que perdÌa el hilo del chat o pedÌa selecciÛn de contactos) por una orden nativa de window.close(), dejando preparado el terreno para que el futuro Dashboard en la VPS envÌe un mensaje autom·tico al cliente de forma asÌncrona (Agentic WhatsApp Workflow).
-- **Indicadores Din·micos de …xito:** Al procesar, el estado visual cambia asÌncronamente (? a ?) sin bloquear la interfaz, mejorando el feedback en tiempo real.
+- **Window Auto-Close:** Se reemplaz√≥ la redirecci√≥n conflictiva hacia WhatsApp (que perd√≠a el hilo del chat o ped√≠a selecci√≥n de contactos) por una orden nativa de window.close(), dejando preparado el terreno para que el futuro Dashboard en la VPS env√≠e un mensaje autom√°tico al cliente de forma as√≠ncrona (Agentic WhatsApp Workflow).
+- **Indicadores Din√°micos de √âxito:** Al procesar, el estado visual cambia as√≠ncronamente (? a ?) sin bloquear la interfaz, mejorando el feedback en tiempo real.
 
 ---
 
 ## Progreso de Sesiones Anteriores (2026-05-06)
-Se completÛ la **RestauraciÛn de Alta Fidelidad del MÛdulo de BiometrÌa**, recuperando la estÈtica validada por el Director.
+Se complet√≥ la **Restauraci√≥n de Alta Fidelidad del M√≥dulo de Biometr√≠a**, recuperando la est√©tica validada por el Director.
 - **Grid de 3 Columnas:** Restaurada la estructura original con columnas dedicadas a *Instrucciones*, *Referencia* y *Carga*.
-- **Zona de Carga:** Rectificada la clase .upload-zone para eliminar el borde entrecortado y establecer un spect-ratio: 1/1 simÈtrico.
+- **Zona de Carga:** Rectificada la clase .upload-zone para eliminar el borde entrecortado y establecer un  spect-ratio: 1/1 sim√©trico.
 
 ---
 
-## Siguiente MisiÛn (Para mi yo del futuro)
-1.  **Despliegue de Dashboard VPS:** Conectar la tabla evaluaciones_completas de Supabase con el Dashboard administrativo.
-2.  **Agente Notificador WhatsApp:** Integrar el webhook para que, al detectar un nuevo registro en Supabase, el agente contacte directamente al cliente enviando un mensaje de "Proceso Completado y En An·lisis".
-3.  **Monitoreo en ProducciÛn:** Validar la retenciÛn de sesiones In-App de IG/FB y confirmar el comportamiento de window.close() a travÈs de distintos O.S mÛviles.
+## Siguiente Misi√≥n (Para mi yo del futuro) - [ACTUALIZADO 2026-05-22]
+1.  ~~**Implementar RLS en Supabase:** Activar Row Level Security en la tabla `evaluaciones_completas`.~~ (COMPLETADO)
+2.  **Despliegue de Dashboard VPS / Webhook Bot:** Conectar la inserci√≥n en tabla con el backend del bot para mensajer√≠a automatizada de cierre.
+3.  **Monitoreo en Producci√≥n:** Validar la retenci√≥n de sesiones In-App de IG/FB y confirmar el comportamiento de window.close() a trav√©s de distintos O.S m√≥viles.
