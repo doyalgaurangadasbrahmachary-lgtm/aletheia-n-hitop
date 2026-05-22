@@ -875,39 +875,12 @@
             </div>
 
             <div style="text-align: right; margin-top: 30px;">
-                <button type="submit" class="btn">Comenzar Evaluación</button>
+                <button type="submit" class="btn">Pasar a recolección de datos biométricos</button>
             </div>
         </form>
     </div>
 
-    <div class="container" id="main-container">
-        <header>
-            <h1>Inventario de Dinámicas y Diseño Personal</h1>
-            <p class="subtitle">Una herramienta de evaluación integrativa de El Camino del Escultor.</p>
-        </header>
 
-        <div class="progress-container" style="display: block;">
-            <div class="progress-bar" id="progress-fill"></div>
-        </div>
-        <div class="progress-text" style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">
-            <span id="progress-status">Pregunta 1 de 27</span>
-            <span id="progress-percent">0%</span>
-        </div>
-
-        <form id="quiz-form" onsubmit="event.preventDefault();">
-            <div id="module-title" style="font-size: 1.5rem; font-weight: 600; color: var(--primary); margin-bottom: 10px; text-align: center;"></div>
-            <div id="module-instruction" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px; text-align: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border);"></div>
-            
-            <div id="module-content">
-                <!-- Contenido dinámico generado por JS -->
-            </div>
-
-            <div class="nav-buttons" style="margin-top: 40px;">
-                <button type="button" class="btn" id="prev-btn" disabled>Anterior</button>
-                <button type="button" class="btn" id="next-btn" disabled>Siguiente</button>
-            </div>
-        </form>
-    </div>
 
     <!-- Pantalla de Instrucciones Iniciales -->
     <div class="container" id="instructions-container">
@@ -1194,7 +1167,7 @@ if (typeof window.supabase !== 'undefined') {
         const progressPercentEl = document.getElementById('progress-percent');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
-        const mainContainer = document.getElementById('main-container');
+        const mainContainer = null;
 
 // --- 3. MOTOR DE INTERFAZ Y PROGRESO ---
 function getProgresoTotal() {
@@ -1523,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userDataForm = document.getElementById('user-data-form');
     
     if (userDataForm) {
-        userDataForm.addEventListener('submit', (e) => {
+        userDataForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             try {
@@ -1547,11 +1520,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     wa_id: wa_id
                 };
                 
-                if (preFormContainer && mainContainer) {
+                const payloadEstructurado = { modulo1: '-', modulo2: '-', modulo3: '-', modulo4: '-' };
+                
+                const { data, error } = await supabaseClient
+                    .from('evaluaciones_completas')
+                    .insert([{
+                        wa_id: wa_id,
+                        nombre: userData.nombre,
+                        ciudad: userData.ciudad,
+                        edad: parseInt(userData.edad),
+                        estado_civil: userData.estadoCivil,
+                        genero: userData.genero,
+                        respuestas_test: payloadEstructurado
+                    }])
+                    .select('id')
+                    .single();
+
+                if (error) throw error;
+
+                globalRecordId = data.id;
+                console.log("Fase 1 completada. ID de Registro:", globalRecordId);
+
+                if (preFormContainer) {
                     preFormContainer.style.display = 'none';
-                    mainContainer.style.display = 'block';
+                    document.getElementById('instructions-container').style.display = 'block';
                     window.scrollTo(0, 0);
-                    updateUI();
                 }
             } catch (err) {
                 alert("ERROR EN RECOLECCIÓN: " + err.message);
@@ -1603,7 +1596,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Fase 1 completada. ID de Registro:", globalRecordId);
 
                 // Transición visual
-                mainContainer.style.display = 'none';
+                // mainContainer.style.display = 'none';
                 document.getElementById('instructions-container').style.display = 'block';
                 window.scrollTo(0, 0);
 
@@ -1801,7 +1794,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // Inicializar ocultando el contenedor principal
-        mainContainer.style.display = 'none';
+        // mainContainer.style.display = 'none';
         updateUI();
         // --- LÓGICA DE ENVÍO (CORE) ---
 
