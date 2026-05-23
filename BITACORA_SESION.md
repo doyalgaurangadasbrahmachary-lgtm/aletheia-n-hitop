@@ -2,7 +2,11 @@
 **Fecha Actual:** 2026-05-22
 **Estado:** Simplificado (Form -> Biometría) y RLS Activo
 
-## Progreso de Hoy (2026-05-22)
+## Progreso de Hoy (2026-05-23)
+- **Corrección de Salto de Scroll (Biometría):** Se desacopló el auto-scroll de navegación del ciclo de actualización de imagen en `updatePhotoUI()`. Se introdujo el parámetro `skipScroll` para evitar que el viewport salte forzosamente al texto descriptivo tras cargar una foto.
+- **Resolución de Conflicto de Scroll (Errores Comunes):** Se eliminó la dependencia de `:hover` para habilitar el scroll interno en la tarjeta `.errors-card`. Se implementó `overflow-y: auto` permanente junto con `touch-action: pan-y` y `-webkit-overflow-scrolling: touch`, garantizando un scroll fluido y sin conflictos con el documento principal en dispositivos móviles.
+
+## Progreso Anterior (2026-05-22)
 - **Simplificación del Flujo:** Se eliminó el módulo completo de evaluación (examen). El flujo ahora pasa directamente del formulario de registro inicial a la recolección de datos biométricos.
 - **Optimización de Interfaz:** Se ocultó el contenedor principal del examen y se ajustó el botón de inicio a "Pasar a recolección de datos biométricos".
 - **Seguridad de Datos y RLS:** Se activó Row Level Security (RLS) en la tabla `evaluaciones_completas` para prevenir accesos no autorizados desde el Frontend.

@@ -429,12 +429,9 @@
         /* Tarjeta de errores con scroll */
         .errors-card {
             max-height: 520px;
-            overflow-y: hidden; /* Oculto por defecto */
-            transition: overflow-y 0.3s;
-        }
-
-        .errors-card:hover {
-            overflow-y: auto; /* Scroll al posar encima */
+            overflow-y: auto;                      /* Siempre activo — sin dependencia de :hover */
+            touch-action: pan-y;                   /* Declara el eje de scroll al motor táctil */
+            -webkit-overflow-scrolling: touch;     /* Scroll nativo fluido en iOS/in-app browsers */
         }
 
         /* Scrollbar Estilizada y Fina */
@@ -1663,7 +1660,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let currentPhotoIndex = 0;
 
-        function updatePhotoUI() {
+        function updatePhotoUI(skipScroll = false) {
             const data = fotosData[currentPhotoIndex];
             const titleEl = document.getElementById('footer-photo-title');
             const descEl = document.getElementById('footer-photo-desc');
@@ -1692,8 +1689,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const instrList = document.getElementById('photo-instructions');
     if (instrList) {
         instrList.classList.add('scrollable-col');
-        instrList.style.maxHeight = '60vh'; 
+        instrList.style.maxHeight = '60vh';
         instrList.style.overflowY = 'auto';
+        instrList.style.touchAction = 'pan-y';               // Refuerzo inline para navegadores sin soporte CSS
+        instrList.style.webkitOverflowScrolling = 'touch';   // Fluidity iOS
         instrList.style.paddingRight = '10px';
         
         instrList.innerHTML = `
@@ -1767,18 +1766,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Auto-scroll de miniaturas para asegurar visibilidad del destaque
-            const activeSlot = document.querySelectorAll('.thumb-slot')[currentPhotoIndex];
-            if (activeSlot) {
-                activeSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            // Solo se ejecuta en navegación, no al procesar una imagen cargada
+            if (!skipScroll) {
+                const activeSlot = document.querySelectorAll('.thumb-slot')[currentPhotoIndex];
+                if (activeSlot) {
+                    activeSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
 
-            // Auto-scroll suave responsivo hacia la instrucción intermedia
-            if (window.innerWidth <= 768) {
-                const midInst = document.getElementById('mobile-mid-instructions');
-                if (midInst) {
-                    setTimeout(() => {
-                        midInst.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 50);
+                // Auto-scroll suave responsivo hacia la instrucción intermedia
+                if (window.innerWidth <= 768) {
+                    const midInst = document.getElementById('mobile-mid-instructions');
+                    if (midInst) {
+                        setTimeout(() => {
+                            midInst.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 50);
+                    }
                 }
             }
 
@@ -1813,7 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     fotosData[currentPhotoIndex].captured = event.target.result;
                     const zone = document.getElementById('active-upload-zone');
                     zone.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
-                    updatePhotoUI();
+                    updatePhotoUI(true); // skipScroll=true: no saltar al texto descriptivo al cargar imagen
                 };
                 reader.readAsDataURL(file);
             }
