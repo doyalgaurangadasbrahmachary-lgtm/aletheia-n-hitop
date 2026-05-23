@@ -3,7 +3,7 @@
 **Estado:** Simplificado (Form -> Biometría) y RLS Activo
 
 ## Progreso de Hoy (2026-05-23)
-- **Corrección de Salto de Scroll (Biometría):** Se desacopló el auto-scroll de navegación del ciclo de actualización de imagen en `updatePhotoUI()`. Se introdujo el parámetro `skipScroll` para evitar que el viewport salte forzosamente al texto descriptivo tras cargar una foto.
+- **Erradicación Global de Auto-Scroll:** Se eliminaron todas las funciones que forzaban la reposición vertical del viewport. Esto incluyó remover 3 instancias de `window.scrollTo(0, 0)` en las transiciones de contenedor (Formulario → Biometría) y la eliminación definitiva de los bloques de `scrollIntoView()` en la lógica de las miniaturas, devolviendo el control total de navegación al usuario.
 - **Resolución de Conflicto de Scroll (Errores Comunes):** Se eliminó la dependencia de `:hover` para habilitar el scroll interno en la tarjeta `.errors-card`. Se implementó `overflow-y: auto` permanente junto con `touch-action: pan-y` y `-webkit-overflow-scrolling: touch`, garantizando un scroll fluido y sin conflictos con el documento principal en dispositivos móviles.
 
 ## Progreso Anterior (2026-05-22)

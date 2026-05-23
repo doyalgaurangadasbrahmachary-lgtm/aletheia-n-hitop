@@ -1562,7 +1562,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (preFormContainer) {
                     preFormContainer.style.display = 'none';
                     document.getElementById('instructions-container').style.display = 'block';
-                    window.scrollTo(0, 0);
                 }
             } catch (err) {
                 alert("ERROR EN RECOLECCIÓN: " + err.message);
@@ -1614,7 +1613,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Transición visual
                 // mainContainer.style.display = 'none';
                 document.getElementById('instructions-container').style.display = 'block';
-                window.scrollTo(0, 0);
 
             } catch (err) {
                 console.error("Error en Fase 1 (Transmisión de Texto):", err);
@@ -1646,7 +1644,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof instructionsContainer !== 'undefined' && typeof photoCaptureContainer !== 'undefined') {
                     instructionsContainer.style.display = 'none';
                     photoCaptureContainer.style.display = 'block';
-                    window.scrollTo(0, 0);
                     if (typeof updatePhotoUI === 'function') {
                         updatePhotoUI(); 
                     } else {
@@ -1660,7 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let currentPhotoIndex = 0;
 
-        function updatePhotoUI(skipScroll = false) {
+        function updatePhotoUI() {
             const data = fotosData[currentPhotoIndex];
             const titleEl = document.getElementById('footer-photo-title');
             const descEl = document.getElementById('footer-photo-desc');
@@ -1765,24 +1762,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Auto-scroll de miniaturas para asegurar visibilidad del destaque
-            // Solo se ejecuta en navegación, no al procesar una imagen cargada
-            if (!skipScroll) {
-                const activeSlot = document.querySelectorAll('.thumb-slot')[currentPhotoIndex];
-                if (activeSlot) {
-                    activeSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }
-
-                // Auto-scroll suave responsivo hacia la instrucción intermedia
-                if (window.innerWidth <= 768) {
-                    const midInst = document.getElementById('mobile-mid-instructions');
-                    if (midInst) {
-                        setTimeout(() => {
-                            midInst.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 50);
-                    }
-                }
-            }
+            // Auto-scroll eliminado por SPEC-03 para permitir navegación libre
 
             verificarEnvioFinal();
         }
@@ -1815,7 +1795,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     fotosData[currentPhotoIndex].captured = event.target.result;
                     const zone = document.getElementById('active-upload-zone');
                     zone.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
-                    updatePhotoUI(true); // skipScroll=true: no saltar al texto descriptivo al cargar imagen
+                    updatePhotoUI(); 
                 };
                 reader.readAsDataURL(file);
             }
