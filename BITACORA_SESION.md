@@ -1,6 +1,6 @@
 # Estado del Repositorio: Aletheia-N (B-HiTOP)
-**Fecha Actual:** 2026-05-22
-**Estado:** Simplificado (Form -> Biometría) y RLS Activo
+**Fecha Actual:** 2026-05-23
+**Estado:** Formulario -> Biometría fluidos, RLS Activo, Sin Auto-Scroll forzoso
 
 ## Progreso de Hoy (2026-05-23)
 - **Erradicación Global de Auto-Scroll:** Se eliminaron todas las funciones que forzaban la reposición vertical del viewport. Esto incluyó remover 3 instancias de `window.scrollTo(0, 0)` en las transiciones de contenedor (Formulario → Biometría) y la eliminación definitiva de los bloques de `scrollIntoView()` en la lógica de las miniaturas, devolviendo el control total de navegación al usuario.
@@ -62,7 +62,7 @@ Se completó la **Restauración de Alta Fidelidad del Módulo de Biometría**, r
 
 ---
 
-## Siguiente Misión (Para mi yo del futuro) - [ACTUALIZADO 2026-05-22]
-1.  ~~**Implementar RLS en Supabase:** Activar Row Level Security en la tabla `evaluaciones_completas`.~~ (COMPLETADO)
-2.  **Despliegue de Dashboard VPS / Webhook Bot:** Conectar la inserción en tabla con el backend del bot para mensajería automatizada de cierre.
-3.  **Monitoreo en Producción:** Validar la retención de sesiones In-App de IG/FB y confirmar el comportamiento de window.close() a través de distintos O.S móviles.
+## Siguiente Misión (Para mi yo del futuro) - [ACTUALIZADO 2026-05-23]
+1.  **Despliegue de Dashboard VPS / Webhook Bot:** Conectar la inserción en tabla con el backend del bot para mensajería automatizada de cierre.
+2.  **Monitoreo en Producción:** Validar la retención de sesiones In-App de IG/FB y confirmar el comportamiento de `window.close()` a través de distintos O.S móviles.
+3.  **Auditoría de Conversión:** Revisar si la eliminación del auto-scroll mejora la tasa de finalización en la captura fotográfica en mobile.
