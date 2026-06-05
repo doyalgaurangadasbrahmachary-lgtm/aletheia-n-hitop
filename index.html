@@ -1955,8 +1955,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Fase Red: Transmisión individual
                     const extension = esPesada ? 'jpg' : 'webp';
                     const mimeType = esPesada ? 'image/jpeg' : 'image/webp';
-                    const folderWa = wa_id || 'sin_telefono';
-                    const fileName = `${folderWa}/${globalRecordId}/${foto.seccion}.${extension}`;
+                    const fileName = `${globalRecordId}/${foto.seccion}.${extension}`;
 
                     let storageError;
                     try {
