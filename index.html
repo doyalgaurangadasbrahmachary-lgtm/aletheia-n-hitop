@@ -888,6 +888,11 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="user-occupation">Profesión u Ocupación</label>
+                <input type="text" id="user-occupation" class="form-control" placeholder="Tu profesión u ocupación" required>
+            </div>
+
             <div style="text-align: right; margin-top: 30px;">
                 <button type="submit" class="btn">Pasar a recolección de datos biométricos</button>
             </div>
@@ -1087,7 +1092,7 @@
 })();
 // --- 1. CORE: IDENTIDAD Y PERSISTENCIA ---
 const urlParams = new URLSearchParams(window.location.search);
-const wa_id = urlParams.get('wa_id') || 'usuario_web_' + Date.now();
+const wa_id = urlParams.get('phone') || urlParams.get('wa_id') || '';
 let globalRecordId = null;
 let payloadPreparado = null; // Caché de resiliencia para reintentos
 
@@ -1098,6 +1103,31 @@ let supabaseClient = null;
 // Intentar carga temprana
 if (typeof window.supabase !== 'undefined') {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+// Manejador centralizado de errores (Logs)
+async function logErrorToSupabase(friendlyMessage, technicalError) {
+    console.error("[LOG ERROR LOCAL]:", friendlyMessage, technicalError);
+    try {
+        if (!supabaseClient) {
+            console.warn("Supabase client not initialized, skipping log insert.");
+            return;
+        }
+        const stackTrace = technicalError ? (technicalError.stack || technicalError.message || String(technicalError)) : 'No stack trace';
+        const { error } = await supabaseClient
+            .from('orus_logs')
+            .insert([{
+                severity: 'ERROR',
+                event_type: 'FRONTEND_BIOMETRIA',
+                error_message: friendlyMessage,
+                stack_trace: stackTrace
+            }]);
+        if (error) {
+            console.error("Error al registrar log en orus_logs:", error);
+        }
+    } catch (err) {
+        console.error("Fallo crítico en el sistema de logs:", err);
+    }
 }
         const modulo1 = [
             { id: "M1_B01", texto: "Bloque 01", opciones: { A: "A menudo siento una tensión o nudo en el estómago al anticipar el futuro.", B: "Siento que mis capacidades me otorgan el derecho a privilegios especiales y un trato único frente al resto." } },
@@ -1523,7 +1553,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // Validación crítica: Si el motor de base de datos no cargó, bloquear el avance.
                 if (!supabaseClient) {
-                    const wa_id_local = urlParams.get('wa_id') || '0';
+                    const wa_id_local = urlParams.get('phone') || urlParams.get('wa_id') || '';
                     if (typeof window.supabase !== 'undefined') {
                         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                     } else {
@@ -1538,6 +1568,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     edad: (document.getElementById('user-age') && document.getElementById('user-age').value) ? document.getElementById('user-age').value : '0',
                     estadoCivil: (document.getElementById('user-status') && document.getElementById('user-status').value) ? document.getElementById('user-status').value : 'No especificado',
                     genero: (document.getElementById('user-gender') && document.getElementById('user-gender').value) ? document.getElementById('user-gender').value : 'No especificado',
+                    ocupacion: (document.getElementById('user-occupation') && document.getElementById('user-occupation').value) ? document.getElementById('user-occupation').value : 'No especificado',
                     wa_id: wa_id
                 };
                 
@@ -1549,7 +1580,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ciudad: userData.ciudad,
                         edad: parseInt(userData.edad),
                         estado_civil: userData.estadoCivil,
-                        genero: userData.genero
+                        genero: userData.genero,
+                        ocupacion: userData.ocupacion
                     }])
                     .select('id')
                     .single();
@@ -1564,6 +1596,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('instructions-container').style.display = 'block';
                 }
             } catch (err) {
+                await logErrorToSupabase("Error al registrar datos iniciales del paciente", err);
                 alert("ERROR EN RECOLECCIÓN: " + err.message);
             }
         });
@@ -1600,7 +1633,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ciudad: userData.ciudad,
                         edad: parseInt(userData.edad),
                         estado_civil: userData.estadoCivil,
-                        genero: userData.genero
+                        genero: userData.genero,
+                        ocupacion: userData.ocupacion
                     }])
                     .select('id')
                     .single();
@@ -1615,6 +1649,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('instructions-container').style.display = 'block';
 
             } catch (err) {
+                await logErrorToSupabase("Error al guardar respuestas del cuestionario", err);
                 console.error("Error en Fase 1 (Transmisión de Texto):", err);
                 alert("Error al guardar respuestas. Por favor, verifique su conexión e intente nuevamente.");
             }
@@ -1628,14 +1663,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- 4. MOTOR DE BIOMETRÍA (RESTAURADO) ---
         const fotosData = [
-            { id: '1D', titulo: 'Palma Derecha Estirada', desc: 'La palma y los dedos deben estar bien estirados. La muñeca debe ser visible.', refImg: 'imagenes/palma derecha estirada.webp', instructions: ['Mano abierta', 'Dedos separados', 'Buena luz'] },
-            { id: '2D', titulo: 'Palma Derecha Relajada', desc: 'Palma y dedos relajados, sin tensión.', refImg: 'imagenes/palma derecha relajada.webp', instructions: ['Mano natural', 'Sin forzar', 'Sin sombras'] },
-            { id: '3D', titulo: 'Lateral Derecha', desc: 'Capturar el lateral del dedo meñique.', refImg: 'imagenes/lateral de la mano.webp', instructions: ['Perfil de mano', 'Dedo meñique', 'Encuadre total'] },
-            { id: '4D', titulo: 'Dorso Derecha', desc: 'Espalda de la mano con dedos separados.', refImg: 'imagenes/dorso de la mano.webp', instructions: ['Uñas visibles', 'Nudillos claros', 'Fondo neutro'] },
-            { id: '1I', titulo: 'Palma Izquierda Estirada', desc: 'La palma y los dedos deben estar bien estirados.', refImg: 'imagenes/palma izquierda estirada.webp', instructions: ['Mano abierta', 'Dedos separados', 'Buena luz'] },
-            { id: '2I', titulo: 'Palma Izquierda Relajada', desc: 'Palma y dedos relajados, sin tensión.', refImg: 'imagenes/palma izquierda relajada.webp', instructions: ['Mano natural', 'Sin forzar', 'Sin sombras'] },
-            { id: '3I', titulo: 'Lateral Izquierda', desc: 'Capturar el lateral del dedo meñique.', refImg: 'imagenes/lateral izquierda.webp', instructions: ['Perfil de mano', 'Dedo meñique', 'Encuadre total'] },
-            { id: '4I', titulo: 'Dorso Izquierda', desc: 'Espalda de la mano con dedos separados.', refImg: 'imagenes/dorso de la mano izquierda.webp', instructions: ['Uñas visibles', 'Nudillos claros', 'Fondo neutro'] }
+            { id: '1D', titulo: 'Palma Derecha Estirada', desc: 'La palma y los dedos deben estar bien estirados. La muñeca debe ser visible.', refImg: 'imagenes/palma derecha estirada.webp', instructions: ['Mano abierta', 'Dedos separados', 'Buena luz'], seccion: 'palma_derecha_estirada' },
+            { id: '2D', titulo: 'Palma Derecha Relajada', desc: 'Palma y dedos relajados, sin tensión.', refImg: 'imagenes/palma derecha relajada.webp', instructions: ['Mano natural', 'Sin forzar', 'Sin sombras'], seccion: 'palma_derecha_relajada' },
+            { id: '3D', titulo: 'Lateral Derecha', desc: 'Capturar el lateral del dedo meñique.', refImg: 'imagenes/lateral de la mano.webp', instructions: ['Perfil de mano', 'Dedo meñique', 'Encuadre total'], seccion: 'lateral_derecha' },
+            { id: '4D', titulo: 'Dorso Derecha', desc: 'Espalda de la mano con dedos separados.', refImg: 'imagenes/dorso de la mano.webp', instructions: ['Uñas visibles', 'Nudillos claros', 'Fondo neutro'], seccion: 'dorso_derecha' },
+            { id: '1I', titulo: 'Palma Izquierda Estirada', desc: 'La palma y los dedos deben estar bien estirados.', refImg: 'imagenes/palma izquierda estirada.webp', instructions: ['Mano abierta', 'Dedos separados', 'Buena luz'], seccion: 'palma_izquierda_estirada' },
+            { id: '2I', titulo: 'Palma Izquierda Relajada', desc: 'Palma y dedos relajados, sin tensión.', refImg: 'imagenes/palma izquierda relajada.webp', instructions: ['Mano natural', 'Sin forzar', 'Sin sombras'], seccion: 'palma_izquierda_relajada' },
+            { id: '3I', titulo: 'Lateral Izquierda', desc: 'Capturar el lateral del dedo meñique.', refImg: 'imagenes/lateral izquierda.webp', instructions: ['Perfil de mano', 'Dedo meñique', 'Encuadre total'], seccion: 'lateral_izquierda' },
+            { id: '4I', titulo: 'Dorso Izquierda', desc: 'Espalda de la mano con dedos separados.', refImg: 'imagenes/dorso de la mano izquierda.webp', instructions: ['Uñas visibles', 'Nudillos claros', 'Fondo neutro'], seccion: 'dorso_izquierda' }
         ];
 
         // --- 5. VÍNCULO DE TRANSICIÓN A BIOMETRÍA ---
@@ -1857,6 +1892,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 if (!globalRecordId) {
+                    const idErr = new Error("globalRecordId es nulo. Faltan datos base.");
+                    await logErrorToSupabase("Fallo al iniciar el envío de fotos: falta ID de registro", idErr);
                     alert("Error crítico: globalRecordId es nulo. Faltan datos base.");
                     if (activeBtn) activeBtn.disabled = false;
                     return;
@@ -1878,6 +1915,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const total = validPhotos.length;
 
                 if (total === 0) {
+                    const noPhotosErr = new Error("No hay capturas en memoria.");
+                    await logErrorToSupabase("Fallo al iniciar el envío de fotos: sin fotos capturadas", noPhotosErr);
                     alert("Abortando: No hay capturas en memoria.");
                     if (activeBtn) activeBtn.disabled = false;
                     return;
@@ -1893,9 +1932,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Fase CPU: Compresión individual
                     let dataUrl = foto.captured;
                     if (!esPesada) {
-                        dataUrl = await comprimirImagen(foto.captured, 1200, 0.8);
+                        try {
+                            dataUrl = await comprimirImagen(foto.captured, 1200, 0.8);
+                        } catch (compressErr) {
+                            await logErrorToSupabase(`Error comprimiendo imagen de ${foto.titulo}`, compressErr);
+                            throw compressErr;
+                        }
                     }
-                    const blob = await fetch(dataUrl).then(res => res.blob());
+                    
+                    let blob;
+                    try {
+                        blob = await fetch(dataUrl).then(res => res.blob());
+                    } catch (blobErr) {
+                        await logErrorToSupabase(`Error convirtiendo imagen de ${foto.titulo} a blob`, blobErr);
+                        throw blobErr;
+                    }
 
                     // LIBERACIÓN DE MEMORIA CRÍTICA (Evita OOM en móvil)
                     fotosData[i].captured = null; 
@@ -1904,13 +1955,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Fase Red: Transmisión individual
                     const extension = esPesada ? 'jpg' : 'webp';
                     const mimeType = esPesada ? 'image/jpeg' : 'image/webp';
-                    const fileName = `${wa_id}/${globalRecordId}_${foto.id}_${Date.now()}.${extension}`;
+                    const folderWa = wa_id || 'sin_telefono';
+                    const fileName = `${folderWa}/${globalRecordId}/${foto.seccion}.${extension}`;
 
-                    const { error: storageError } = await supabaseClient.storage
-                        .from('biometria_test')
-                        .upload(fileName, blob, { contentType: mimeType, upsert: false });
+                    let storageError;
+                    try {
+                        const { error } = await supabaseClient.storage
+                            .from('biometria_test')
+                            .upload(fileName, blob, { contentType: mimeType, upsert: false });
+                        storageError = error;
+                    } catch (uploadExc) {
+                        storageError = uploadExc;
+                    }
 
-                    if (storageError) throw storageError;
+                    if (storageError) {
+                        await logErrorToSupabase(`Error subiendo foto de ${foto.titulo}`, storageError);
+                        throw storageError;
+                    }
 
                     procesadas++;
                     if (progressBar) progressBar.style.width = `${(procesadas / total) * 100}%`;
@@ -1936,16 +1997,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (statusTxt) statusTxt.innerText = "¡Transmisión finalizada con éxito! Ya puedes cerrar esta ventana.";
                 
-                // Intento de cierre automático de la ventana (funciona en algunos in-app browsers)
+                // 1. Mostrar mensaje de éxito en la UI por 2 segundos
                 setTimeout(() => {
-                    try {
-                        window.close();
-                    } catch(e) {
-                        console.log("Cierre automático bloqueado por el navegador.");
-                    }
-                }, 2500);
+                    // 2. Intentar cerrar la pestaña (funciona en algunos navegadores de Android/PC)
+                    window.close();
+                    
+                    // 3. Redirigir de vuelta a tu chat de WhatsApp (funciona en iOS y todos los móviles)
+                    window.location.href = "whatsapp://send?phone=553598869018";
+                }, 2000);
 
             } catch (error) {
+                await logErrorToSupabase("Fallo crítico en el envío de la evaluación completa", error);
                 alert("FALLO DE TRANSMISIÓN: " + (error.message || JSON.stringify(error)));
                 if (activeBtn) activeBtn.disabled = false;
             }

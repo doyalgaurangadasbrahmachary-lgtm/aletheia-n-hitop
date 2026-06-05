@@ -1,8 +1,13 @@
 # Estado del Repositorio: Aletheia-N (B-HiTOP)
-**Fecha Actual:** 2026-05-23
-**Estado:** Formulario -> Biometría fluidos, RLS Activo, Sin Auto-Scroll forzoso
+**Fecha Actual:** 2026-06-05
+**Estado:** Formulario -> Biometría fluidos, RLS Activo, Sin Auto-Scroll, Nomenclatura Descriptiva, Campo Ocupación y Logs Centralizados
 
-## Progreso de Hoy (2026-05-23)
+## Progreso de Hoy (2026-06-05)
+- **Campo Ocupación:** Se integró el campo "Profesión u Ocupación" en el formulario inicial del paciente y se actualizó el payload para guardarse en `evaluaciones_completas`.
+- **Nomenclatura de Archivos en Storage:** Se definieron nombres descriptivos de sección en `fotosData` y se actualizó la ruta de carga en Supabase Storage a `[wa_id]/[globalRecordId]/[seccion].[extension]` para auditoría visual directa de ZIPs.
+- **Manejo Centralizado de Logs:** Se implementó `logErrorToSupabase()` para persistir errores técnicos en `orus_logs` con la estructura requerida (severity, event_type, error_message, stack_trace).
+
+## Progreso Anterior (2026-05-23)
 - **Erradicación Global de Auto-Scroll:** Se eliminaron todas las funciones que forzaban la reposición vertical del viewport. Esto incluyó remover 3 instancias de `window.scrollTo(0, 0)` en las transiciones de contenedor (Formulario → Biometría) y la eliminación definitiva de los bloques de `scrollIntoView()` en la lógica de las miniaturas, devolviendo el control total de navegación al usuario.
 - **Resolución de Conflicto de Scroll (Errores Comunes):** Se eliminó la dependencia de `:hover` para habilitar el scroll interno en la tarjeta `.errors-card`. Se implementó `overflow-y: auto` permanente junto con `touch-action: pan-y` y `-webkit-overflow-scrolling: touch`, garantizando un scroll fluido y sin conflictos con el documento principal en dispositivos móviles.
 
@@ -62,7 +67,7 @@ Se completó la **Restauración de Alta Fidelidad del Módulo de Biometría**, r
 
 ---
 
-## Siguiente Misión (Para mi yo del futuro) - [ACTUALIZADO 2026-05-23]
-1.  **Despliegue de Dashboard VPS / Webhook Bot:** Conectar la inserción en tabla con el backend del bot para mensajería automatizada de cierre.
-2.  **Monitoreo en Producción:** Validar la retención de sesiones In-App de IG/FB y confirmar el comportamiento de `window.close()` a través de distintos O.S móviles.
-3.  **Auditoría de Conversión:** Revisar si la eliminación del auto-scroll mejora la tasa de finalización en la captura fotográfica en mobile.
+## Siguiente Misión (Para mi yo del futuro) - [ACTUALIZADO 2026-06-05]
+1.  **Pruebas Manuales:** Validar el guardado del nuevo campo `ocupacion` y verificar que las fotos se suban con los nombres de las secciones asignadas sin timestamps ni hashes intermedios.
+2.  **Monitoreo de Logs:** Forzar excepciones en el cliente Supabase (ej. desconexión o payload incompleto) para comprobar que los errores aparezcan en `orus_logs`.
+3.  **Verificación de Base de Datos:** Asegurar que la columna `ocupacion` de tipo texto exista en `evaluaciones_completas` para evitar rechazos en producción.
