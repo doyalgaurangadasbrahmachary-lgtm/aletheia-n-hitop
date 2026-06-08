@@ -1976,7 +1976,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (progressBar) progressBar.style.width = `${(procesadas / total) * 100}%`;
                 }
 
-                // UI Final: Marcar pasos como completados
+                // ── MARCAR FOTOS COMO COMPLETADAS en la BD ──────────────────
+                // Esto dispara el trigger de Supabase que notifica al bot de WhatsApp
+                const { error: updateError } = await supabaseClient
+                    .from('evaluaciones_completas')
+                    .update({ fotos_completadas: true })
+                    .eq('id', globalRecordId);
+
+                if (updateError) {
+                    console.error('Error marcando fotos como completadas:', updateError);
+                    await logErrorToSupabase('Error actualizando fotos_completadas', updateError);
+                    // No bloqueamos el flujo visual — las fotos ya se subieron correctamente
+                }
+
+
                 const stepProcessing = document.getElementById('step-processing');
                 const stepUploading = document.getElementById('step-uploading');
                 const successTitle = document.getElementById('success-title');
